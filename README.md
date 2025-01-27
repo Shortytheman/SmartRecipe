@@ -1,4 +1,4 @@
-# Multi-Database E-commerce Platform
+# Multi-Database recipe recommendation system
 
 ## Overview
 
