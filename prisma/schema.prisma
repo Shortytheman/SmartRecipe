@@ -1,0 +1,164 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = "mysql://root:password@localhost:3306/smartrecipe"
+}
+
+model User {
+  id            Int          @id @default(autoincrement())
+  name          String
+  email         String       @unique
+  password      String?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  deletedAt     DateTime?
+  oauthId       String?
+  oauthProvider String?
+  prompts       UserPrompt[]
+  recipes       Recipe[]     @relation("UserRecipes")
+  userRecipes   UserRecipe[] @relation("UserRecipeUser")
+
+  @@map("users")
+}
+
+model UserPrompt {
+  id            Int                  @id @default(autoincrement())
+  userId        Int
+  prompt        Json
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+  deletedAt     DateTime?
+  user          User                 @relation(fields: [userId], references: [id])
+  aiResponse    AIResponse?
+  aiResponseId  Int?
+  modifications RecipeModification[]
+
+  @@map("userPrompts")
+}
+
+model AIResponse {
+  id                    Int                    @id @default(autoincrement())
+  userPromptId          Int                    @unique
+  response              Json
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  deletedAt             DateTime?
+  userPrompt            UserPrompt             @relation(fields: [userPromptId], references: [id])
+  recipes               Recipe[]
+  modificationResponses ModificationResponse[]
+
+  @@map("aiResponses")
+}
+
+model Recipe {
+  id                Int                  @id @default(autoincrement())
+  aiResponseId      Int
+  name              String
+  prep              Json
+  cook              Json
+  portionSize       Int
+  finalComment      String
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+  deletedAt         DateTime?
+  aiResponse        AIResponse           @relation(fields: [aiResponseId], references: [id])
+  instructions      Instruction[]
+  recipeIngredients RecipeIngredient[]
+  modifications     RecipeModification[]
+  users             User[]               @relation("UserRecipes")
+  ingredients       Ingredient[]         @relation("RecipeIngredients")
+  recipeUsers       UserRecipe[]         @relation("UserRecipeRecipe")
+
+  @@map("recipes")
+}
+
+model RecipeIngredient {
+  recipeId     Int
+  ingredientId Int
+  value        Float
+  unit         String
+  comment      String?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  deletedAt    DateTime?
+  recipe       Recipe     @relation(fields: [recipeId], references: [id])
+  ingredient   Ingredient @relation(fields: [ingredientId], references: [id])
+
+  @@id([recipeId, ingredientId])
+  @@map("recipeIngredients") // Custom table name for the pivot table
+}
+
+model Ingredient {
+  id                Int                @id @default(autoincrement())
+  name              String             @unique
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  deletedAt         DateTime?
+  recipeIngredients RecipeIngredient[]
+  recipes           Recipe[]           @relation("RecipeIngredients")
+
+  @@map("ingredients")
+}
+
+model Instruction {
+  id        Int       @id @default(autoincrement())
+  recipeId  Int
+  part      Int
+  steps     Json
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+  recipe    Recipe    @relation(fields: [recipeId], references: [id])
+
+  @@map("instructions")
+}
+
+model RecipeModification {
+  id                    Int                    @id @default(autoincrement())
+  recipeId              Int
+  userPromptId          Int
+  isActive              Boolean
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  deletedAt             DateTime?
+  recipe                Recipe                 @relation(fields: [recipeId], references: [id])
+  userPrompt            UserPrompt             @relation(fields: [userPromptId], references: [id])
+  modificationResponses ModificationResponse[]
+
+  @@map("recipeModifications")
+}
+
+model ModificationResponse {
+  id              Int                @id @default(autoincrement())
+  aiResponseId    Int
+  modificationId  Int
+  appliedToRecipe Boolean
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  deletedAt       DateTime?
+  aiResponse      AIResponse         @relation(fields: [aiResponseId], references: [id])
+  modification    RecipeModification @relation(fields: [modificationId], references: [id])
+
+  @@map("modificationResponses")
+}
+
+model UserRecipe {
+  userId    Int
+  recipeId  Int
+  createdAt DateTime @default(now())
+
+  user   User   @relation("UserRecipeUser", fields: [userId], references: [id])
+  recipe Recipe @relation("UserRecipeRecipe", fields: [recipeId], references: [id])
+
+  @@id([userId, recipeId])
+  @@map("userRecipes")
+}
