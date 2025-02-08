@@ -1,96 +1,155 @@
-import neo4j from "neo4j-driver";
-import { v4 as uuidv4 } from "uuid"
+// neo4jService.js
+import neo4j from 'neo4j-driver';
 
-const driver = neo4j.driver("bolt://localhost:7687", neo4j.auth.basic("neo4j", "password"));
+class Neo4jService {
+  constructor() {
+    this.driver = neo4j.driver(
+        'bolt://localhost:7687',
+        neo4j.auth.basic('neo4j', 'password')
+    );
+  }
 
-// You should create a new session for each operation to avoid multiple queries running on the same session
-export const neo4jservice = {
-  nodes: {
-    create: async (label, data) => {
-      const session = driver.session();
-      try {
-        const nodeData = { ...data, id: data.id || uuidv4() };
-        const result = await session.executeWrite((tx) =>
-          tx.run(`CREATE (n:${label} $props) RETURN n`, { props: nodeData })
-        );
-        const node = result.records[0].get(0);
-        return node.properties ;
-      } catch (error) {
-        throw new Error("Error creating node: " + error.message);
-      } finally {
-        await session.close();
-      }
-    },
+  async init() {
+    await this.createConstraints();
+    await this.createIndexes();
+  }
 
-    read: async (label, query) => {
-      const session = driver.session();  // Open a new session
-      try {
-        const result = await session.executeWrite((tx) =>
-          tx.run(`MATCH (n:${label}) WHERE ${query} RETURN n`)
-        );
-        return result.records;
-      } catch (error) {
-        throw new Error("Error reading node: " + error.message);
-      } finally {
-        await session.close();  // Always close the session after use
-      }
-    },
-
-    update: async (label, match, updates) => {
-      const session = driver.session();  // Open a new session
-      try {
-        const result = await session.executeWrite((tx) =>
-          tx.run(
-            `MATCH (n:${label}) WHERE ${match} SET ${Object.entries(updates)
-              .map(([k, v]) => `n.${k} = '${v}'`)
-              .join(", ")} RETURN n`
-          )
-        );
-        return result.records[0].get(0).properties;
-      } catch (error) {
-        throw new Error("Error updating node: " + error.message);
-      } finally {
-        await session.close();
-      }
-    },
-
-    delete: async (label, match) => {
-      const session = driver.session();  // Open a new session
-      try {
-        await session.executeWrite((tx) =>
-          tx.run(`MATCH (n:${label}) WHERE ${match} DELETE n`)
-        );
-      } catch (error) {
-        throw new Error("Error deleting node: " + error.message);
-      } finally {
-        await session.close();  // Always close the session after use
-      }
-    },
-
-    createRelationship: async (startNode, relationshipType, endNode) => {
-      console.log(startNode, relationshipType, endNode);
-      console.log(startNode.id, endNode.id);
-      const session = driver.session();
-      try {
-        const query = `
-          MATCH (start {id: $startId})
-          MATCH (end {id: $endId})
-          CREATE (start)-[:${relationshipType}]->(end)
-        `;
-        await session.executeWrite((tx) =>
-          tx.run(query, { startId: startNode.id, endId: endNode.id }),
-          console.log(query)
-        );
-      } catch (error) {
-        throw new Error("Error creating relationship: " + error.message);
-      } finally {
-        await session.close();
-      }
+  async query(cypher, params = {}) {
+    const session = this.driver.session();
+    try {
+      return await session.run(cypher, params);
+    } finally {
+      await session.close();
     }
-  },
-};
+  }
 
-// Example of closing the connections when done
-export const closeConnections = async () => {
-  await driver.close();
-};
+  async createConstraints() {
+    const constraints = [
+      'CREATE CONSTRAINT IF NOT EXISTS FOR (u:User) REQUIRE u.email IS UNIQUE',
+      'CREATE CONSTRAINT IF NOT EXISTS FOR (i:Ingredient) REQUIRE i.name IS UNIQUE',
+      'CREATE CONSTRAINT IF NOT EXISTS FOR (r:Recipe) REQUIRE r.id IS UNIQUE',
+      'CREATE CONSTRAINT IF NOT EXISTS FOR (up:UserPrompt) REQUIRE up.id IS UNIQUE',
+      'CREATE CONSTRAINT IF NOT EXISTS FOR (ar:AIResponse) REQUIRE ar.id IS UNIQUE'
+    ];
+
+    for (const constraint of constraints) {
+      await this.query(constraint);
+    }
+  }
+
+  async createIndexes() {
+    const indexes = [
+      'CREATE INDEX IF NOT EXISTS FOR (r:Recipe) ON (r.name)',
+      'CREATE INDEX IF NOT EXISTS FOR (r:Recipe) ON (r.createdAt)',
+      'CREATE INDEX IF NOT EXISTS FOR (u:User) ON (u.oauthId)',
+      'CREATE INDEX IF NOT EXISTS FOR (i:Ingredient) ON (i.category)'
+    ];
+
+    for (const index of indexes) {
+      await this.query(index);
+    }
+  }
+
+  // Node operations
+  async createNode(label, properties) {
+    const timestamp = Date.now();
+    const result = await this.query(
+        `
+            CREATE (n:${label} $props)
+            RETURN n
+            `,
+        {
+          props: {
+            ...properties,
+            id: `${label.toLowerCase()}_${timestamp}`,
+            createdAt: timestamp,
+            updatedAt: timestamp
+          }
+        }
+    );
+    return result.records[0].get('n').properties;
+  }
+
+  async updateNode(label, id, properties) {
+    const result = await this.query(
+        `
+            MATCH (n:${label} {id: $id})
+            SET n += $props, n.updatedAt = $timestamp
+            RETURN n
+            `,
+        {
+          id,
+          props: properties,
+          timestamp: Date.now()
+        }
+    );
+    return result.records[0].get('n').properties;
+  }
+
+  async deleteNode(label, id) {
+    await this.query(
+        `
+            MATCH (n:${label} {id: $id})
+            DETACH DELETE n
+            `,
+        { id }
+    );
+  }
+
+  // Relationship operations
+  async createRelationship(fromNode, relationType, toNode, properties = {}) {
+    const result = await this.query(
+        `
+            MATCH (from {id: $fromId}), (to {id: $toId})
+            CREATE (from)-[r:${relationType} $props]->(to)
+            RETURN r
+            `,
+        {
+          fromId: fromNode.id,
+          toId: toNode.id,
+          props: {
+            ...properties,
+            createdAt: Date.now()
+          }
+        }
+    );
+    return result.records[0].get('r').properties;
+  }
+
+  // Common queries
+  async getRecipeWithIngredients(recipeId) {
+    const result = await this.query(
+        `
+            MATCH (r:Recipe {id: $recipeId})
+            MATCH (r)-[rel:CONTAINS_INGREDIENT]->(i:Ingredient)
+            RETURN r, collect({ingredient: i, relationship: rel}) as ingredients
+            `,
+        { recipeId }
+    );
+    return result.records[0]?.get(0);
+  }
+
+  async getUserRecipes(userId) {
+    const result = await this.query(
+        `
+            MATCH (u:User {id: $userId})-[:OWNS_RECIPE]->(r:Recipe)
+            RETURN r
+            `,
+        { userId }
+    );
+    return result.records.map(record => record.get('r').properties);
+  }
+
+  async getRecipeModifications(recipeId) {
+    const result = await this.query(
+        `
+            MATCH (r:Recipe {id: $recipeId})-[:HAS_MODIFICATION]->(m:RecipeModification)
+            RETURN m
+            `,
+        { recipeId }
+    );
+    return result.records.map(record => record.get('m').properties);
+  }
+}
+
+export const neo4jService = new Neo4jService();
