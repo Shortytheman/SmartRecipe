@@ -11,7 +11,9 @@ This project demonstrates a multi-database setup using SQL, MongoDB, and Neo4j f
 # USIKKER PÅ OM MAN SKAL KØRE MIGRATE SCRIPTS PPÅ NY COMPUTER??
 
 `npm run seed:mysql`
+
 `npm run seed:mongo`
+
 `npm run seed:neo4j`
 
 # Access Neo4j In Docker
@@ -29,12 +31,13 @@ return all recipes
 
 ## Example API Calls
 
-# Get Recipe
+### Get Recipe
 `http://localhost:3000/mongodb/recipe/:id`
 
 `http://localhost:3000/neo4j/recipe/:id`
 
 `http://localhost:3000/mysql/recipe/:id`
+
 
 ## Visualizations
 
