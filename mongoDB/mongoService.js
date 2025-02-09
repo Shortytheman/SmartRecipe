@@ -1,81 +1,71 @@
-import mongoose from "mongoose";
-import {
+import {mongoose} from "./mongoConnector.js";
+import models from "./mongoSchema.js"; // Import the default export
+
+const {
   User, UserPrompt, AIResponse, Recipe, RecipeIngredient, Ingredient, Instruction,
   RecipeModification, ModificationResponse, UserRecipe,
-} from "./mongoSchema.js";
-
+} = models;
 
 const service = {
   mongo: {
     create: (Model, data) => Model.create(data),
     read: (Model, query) => Model.find(query),
-    update: (Model, query, data) => Model.updateMany(query, data),
-    delete: (Model, query) => Model.deleteMany(query),
+    readById: (Model, id) => Model.findById(id), // Add method to read by ID
+    updateById: (Model, id, data) => Model.findByIdAndUpdate(id, data, { new: true }), // Add method to update by ID
+    deleteById: (Model, id) => Model.findByIdAndDelete(id) // Add method to delete by ID
   }
 };
 
+export const MongoService = {
+  createUser: (data) => service.mongo.create(User, data),
+  getUser: (id) => service.mongo.readById(User, id),
+  updateUser: (id, data) => service.mongo.updateById(User, id, data),
+  deleteUser: (id) => service.mongo.deleteById(User, id),
 
-export const mongoService = {
-  users: {
-    create: (data) => service.mongo.create(User, data),
-    read: (query) => service.mongo.read(User, query),
-    update: (query, data) => service.mongo.update(User, query, data),
-    delete: (query) => service.mongo.delete(User, query),
-  },
-  userPrompts: {
-    create: (data) => service.mongo.create(UserPrompt, data),
-    read: (query) => service.mongo.read(UserPrompt, query),
-    update: (query, data) => service.mongo.update(UserPrompt, query, data),
-    delete: (query) => service.mongo.delete(UserPrompt, query),
-  },
-  aiResponses: {
-    create: (data) => service.mongo.create(AIResponse, data),
-    read: (query) => service.mongo.read(AIResponse, query),
-    update: (query, data) => service.mongo.update(AIResponse, query, data),
-    delete: (query) => service.mongo.delete(AIResponse, query),
-  },
-  recipes: {
-    create: (data) => service.mongo.create(Recipe, data),
-    read: (query) => service.mongo.read(Recipe, query),
-    update: (query, data) => service.mongo.update(Recipe, query, data),
-    delete: (query) => service.mongo.delete(Recipe, query),
-  },
-  recipeIngredients: {
-    create: (data) => service.mongo.create(RecipeIngredient, data),
-    read: (query) => service.mongo.read(RecipeIngredient, query),
-    update: (query, data) => service.mongo.update(RecipeIngredient, query, data),
-    delete: (query) => service.mongo.delete(RecipeIngredient, query),
-  },
-  ingredients: {
-    create: (data) => service.mongo.create(Ingredient, data),
-    read: (query) => service.mongo.read(Ingredient, query),
-    update: (query, data) => service.mongo.update(Ingredient, query),
-    delete: (query) => service.mongo.delete(Ingredient, query),
-  },
-  instructions: {
-    create: (data) => service.mongo.create(Instruction, data),
-    read: (query) => service.mongo.read(Instruction, query),
-    update: (query, data) => service.mongo.update(Instruction, query),
-    delete: (query) => service.mongo.delete(Instruction, query),
-  },
-  recipeModifications: {
-    create: (data) => service.mongo.create(RecipeModification, data),
-    read: (query) => service.mongo.read(RecipeModification, query),
-    update: (query, data) => service.mongo.update(RecipeModification, query, data),
-    delete: (query) => service.mongo.delete(RecipeModification, query),
-  },
-  modificationResponses: {
-    create: (data) => service.mongo.create(ModificationResponse, data),
-    read: (query) => service.mongo.read(ModificationResponse, query),
-    update: (query, data) => service.mongo.update(ModificationResponse, query, data),
-    delete: (query) => service.mongo.delete(ModificationResponse, query),
-  },
-  userRecipes: {
-    create: (data) => service.mongo.create(UserRecipe, data),
-    read: (query) => service.mongo.read(UserRecipe, query),
-    update: (query, data) => service.mongo.update(UserRecipe, query, data),
-    delete: (query) => service.mongo.delete(UserRecipe, query),
-  },
+  createUserPrompt: (data) => service.mongo.create(UserPrompt, data),
+  getUserPrompt: (id) => service.mongo.readById(UserPrompt, id),
+  updateUserPrompt: (id, data) => service.mongo.updateById(UserPrompt, id, data),
+  deleteUserPrompt: (id) => service.mongo.deleteById(UserPrompt, id),
+
+  createAIResponse: (data) => service.mongo.create(AIResponse, data),
+  getAIResponse: (id) => service.mongo.readById(AIResponse, id),
+  updateAIResponse: (id, data) => service.mongo.updateById(AIResponse, id, data),
+  deleteAIResponse: (id) => service.mongo.deleteById(AIResponse, id),
+
+  createRecipe: (data) => service.mongo.create(Recipe, data),
+  getRecipe: (id) => service.mongo.readById(Recipe, id),
+  updateRecipe: (id, data) => service.mongo.updateById(Recipe, id, data),
+  deleteRecipe: (id) => service.mongo.deleteById(Recipe, id),
+
+  createRecipeIngredient: (data) => service.mongo.create(RecipeIngredient, data),
+  getRecipeIngredient: (id) => service.mongo.readById(RecipeIngredient, id),
+  updateRecipeIngredient: (id, data) => service.mongo.updateById(RecipeIngredient, id, data),
+  deleteRecipeIngredient: (id) => service.mongo.deleteById(RecipeIngredient, id),
+
+  createIngredient: (data) => service.mongo.create(Ingredient, data),
+  getIngredient: (id) => service.mongo.readById(Ingredient, id),
+  updateIngredient: (id, data) => service.mongo.updateById(Ingredient, id, data),
+  deleteIngredient: (id) => service.mongo.deleteById(Ingredient, id),
+
+  createInstruction: (data) => service.mongo.create(Instruction, data),
+  getInstruction: (id) => service.mongo.readById(Instruction, id),
+  updateInstruction: (id, data) => service.mongo.updateById(Instruction, id, data),
+  deleteInstruction: (id) => service.mongo.deleteById(Instruction, id),
+
+  createRecipeModification: (data) => service.mongo.create(RecipeModification, data),
+  getRecipeModification: (id) => service.mongo.readById(RecipeModification, id),
+  updateRecipeModification: (id, data) => service.mongo.updateById(RecipeModification, id, data),
+  deleteRecipeModification: (id) => service.mongo.deleteById(RecipeModification, id),
+
+  createModificationResponse: (data) => service.mongo.create(ModificationResponse, data),
+  getModificationResponse: (id) => service.mongo.readById(ModificationResponse, id),
+  updateModificationResponse: (id, data) => service.mongo.updateById(ModificationResponse, id, data),
+  deleteModificationResponse: (id) => service.mongo.deleteById(ModificationResponse, id),
+
+  createUserRecipe: (data) => service.mongo.create(UserRecipe, data),
+  getUserRecipe: (id) => service.mongo.readById(UserRecipe, id),
+  updateUserRecipe: (id, data) => service.mongo.updateById(UserRecipe, id, data),
+  deleteUserRecipe: (id) => service.mongo.deleteById(UserRecipe, id),
 };
 
 export const closeConnections = async () => {

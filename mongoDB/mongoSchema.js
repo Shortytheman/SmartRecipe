@@ -32,7 +32,6 @@ const UserSchema = new mongoose.Schema({
 });
 
 // Indexes for User
-UserSchema.index({ email: 1 });
 UserSchema.index({ oauthId: 1, oauthProvider: 1 });
 UserSchema.index({ name: 'text' });
 
