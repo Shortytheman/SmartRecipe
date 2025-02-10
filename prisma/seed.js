@@ -8,6 +8,7 @@ dotenv.config();
 
 const prisma = new PrismaClient();
 
+
 // Database setup configuration
 const dbConfig = {
     host: process.env.DB_HOST,

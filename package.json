@@ -14,7 +14,8 @@
     "prisma:migrate": "prisma migrate dev",
     "seed:mongo": "node mongoDB/seed.js",
     "seed:neo4j": "node neo4j/neo4jSeeder.js",
-    "seed:mysql": "node prisma/seed.js"
+    "seed:mysql": "node prisma/seed.js",
+    "seed:all": "node mongoDB/seed.js & node neo4j/neo4jSeeder.js & node prisma/seed.js"
   },
   "keywords": [],
   "author": "",
@@ -26,7 +27,6 @@
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.18.2",
-    "faker": "^5.5.3",
     "mongoose": "^8.2.0",
     "mysql2": "^3.12.0",
     "neo4j-driver": "^5.27.0",

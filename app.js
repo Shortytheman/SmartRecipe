@@ -42,7 +42,7 @@ app.post('/:dbType/:model', validateDbType, async (req, res) => {
 
 app.get('/:dbType/:model/:id', validateDbType, async (req, res) => {
     const { dbType, model, id } = req.params;
-    console.log(`Calling method: get${capitalize(model)}`);
+    console.log(`__________________________\nCalling method: get${capitalize(model)}`);
     console.log(`Database type: ${dbType}\nModel: ${model}\nID: ${id}`);
     try {
         let result;
@@ -65,11 +65,13 @@ app.get('/:dbType/:model/:id', validateDbType, async (req, res) => {
         }
 
         if (result) {
+            console.log(`${capitalize(model)} found: ${result.name}\n__________________________`);
             res.json(result);
         } else {
-            console.log(`${capitalize(model)} not found`);
+            console.log(`${capitalize(model)} not found\n__________________________`);
             res.status(404).json({ error: `${capitalize(model)} not found` });
         }
+
     } catch (error) {
         console.log(error);
         res.status(500).json({ error: error.message });

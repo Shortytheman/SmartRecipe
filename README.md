@@ -22,7 +22,6 @@ cypher-shell -u neo4j -p password
 return all recipes
 
 `MATCH (r:Recipe) RETURN r`;
-
 ## Running the Application
 
 1. Install dependencies: `npm install`

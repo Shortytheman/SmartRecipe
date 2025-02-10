@@ -1,6 +1,6 @@
 // mongoSeeder.js
 import mongoose from 'mongoose';
-import faker from 'faker';
+import { faker } from '@faker-js/faker';
 import models from './mongoSchema.js';
 
 const DATABASE_NAME = 'smartrecipe';
@@ -25,11 +25,11 @@ const seedMongoDB = async () => {
 
         // Seed Users
         const users = Array.from({ length: 10 }).map(() => ({
-            name: faker.name.findName(),
+            name: faker.person.fullName(),
             email: faker.internet.email(),
             password: faker.internet.password(),
-            oauthId: faker.datatype.uuid(),
-            oauthProvider: faker.random.arrayElement(['google', 'facebook', 'github']),
+            oauthId: faker.string.uuid(),
+            oauthProvider: faker.helpers.arrayElement(['google', 'facebook', 'github']),
         }));
         const insertedUsers = await models.User.insertMany(users);
         console.log('Users seeded');
@@ -71,7 +71,7 @@ const seedMongoDB = async () => {
 
         // Seed User Prompts
         const userPrompts = Array.from({ length: 20 }).map(() => ({
-            userId: faker.random.arrayElement(insertedUsers)._id,
+            userId: faker.helpers.arrayElement(insertedUsers)._id,
             prompt: JSON.stringify({
                 question: faker.lorem.sentence(),
                 preferences: faker.lorem.words()
@@ -106,8 +106,8 @@ const seedMongoDB = async () => {
                 const ingredient = availableIngredients.splice(randomIndex, 1)[0];
                 return {
                     ingredientId: ingredient._id,
-                    value: faker.datatype.number({ min: 1, max: 100 }),
-                    unit: faker.random.arrayElement(['g', 'ml', 'tbsp', 'tsp']),
+                    value: faker.number.int({ min: 1, max: 100 }),
+                    unit: faker.helpers.arrayElement(['g', 'ml', 'tbsp', 'tsp']),
                     comment: faker.lorem.sentence()
                 };
             });
@@ -126,16 +126,16 @@ const seedMongoDB = async () => {
             return {
                 name: faker.commerce.productName(),
                 prep: JSON.stringify({
-                    time: faker.random.arrayElement(['15 mins', '30 mins', '1 hour']),
-                    difficulty: faker.random.arrayElement(['easy', 'medium', 'hard'])
+                    time: faker.helpers.arrayElement(['15 mins', '30 mins', '1 hour']),
+                    difficulty: faker.helpers.arrayElement(['easy', 'medium', 'hard'])
                 }),
                 cook: JSON.stringify({
-                    time: faker.random.arrayElement(['20 mins', '45 mins', '1.5 hours']),
-                    method: faker.random.arrayElement(['bake', 'fry', 'grill'])
+                    time: faker.helpers.arrayElement(['20 mins', '45 mins', '1.5 hours']),
+                    method: faker.helpers.arrayElement(['bake', 'fry', 'grill'])
                 }),
-                portionSize: faker.datatype.number({ min: 1, max: 10 }),
+                portionSize: faker.number.int({ min: 1, max: 10 }),
                 finalComment: faker.lorem.sentence(),
-                aiResponseId: faker.random.arrayElement(insertedAIResponses)._id,
+                aiResponseId: faker.helpers.arrayElement(insertedAIResponses)._id,
                 instructions,
                 ingredients: recipeIngredients,
                 users: recipeUsers
@@ -149,7 +149,7 @@ const seedMongoDB = async () => {
         const recipeModifications = insertedRecipes.flatMap((recipe) =>
             Array.from({ length: 3 }).map(() => ({
                 recipeId: recipe._id,
-                userPromptId: faker.random.arrayElement(insertedUserPrompts)._id,
+                userPromptId: faker.helpers.arrayElement(insertedUserPrompts)._id,
                 isActive: faker.datatype.boolean(),
             }))
         );
@@ -160,7 +160,7 @@ const seedMongoDB = async () => {
         const modificationResponses = insertedAIResponses.flatMap((aiResponse) =>
             Array.from({ length: 3 }).map(() => ({
                 aiResponseId: aiResponse._id,
-                modificationId: faker.random.arrayElement(insertedRecipeModifications)._id,
+                modificationId: faker.helpers.arrayElement(insertedRecipeModifications)._id,
                 appliedToRecipe: faker.datatype.boolean(),
             }))
         );
