@@ -5,7 +5,37 @@ class MySQLService {
     this.prisma = prisma;
   }
 
+  async getAll(model) {
+    const modelName = model.charAt(0).toUpperCase() + model.slice(1); // Capitalize model name
+    const methodName = `get${modelName}s`; // Construct the pluralized method name
+
+    if (typeof this[methodName] !== 'function') {
+      throw new Error(`Method ${methodName} not found for model ${model}`);
+    }
+
+    return this[methodName](); // Call the dynamically constructed method
+  }
+
+  async createMethod(model, data) {
+    const modelName = model.charAt(0).toUpperCase() + model.slice(1); // Capitalize model name
+    const methodName = `create${modelName}`; // Construct the pluralized method name
+
+
+    console.log(modelName)
+    console.log(methodName)
+
+    if (typeof this[methodName] !== 'function') {
+      throw new Error(`Method ${methodName} not found for model ${model}`);
+    }
+    console.log(data)
+    return this[methodName](data); // Call the dynamically constructed method
+  }
+
   // CRUD Operations for Users
+  async getUsers() {
+    return await this.prisma.user.findMany();
+  }
+
   async createUser(data) {
     return await this.prisma.user.create({
       data,
@@ -32,6 +62,10 @@ class MySQLService {
   }
 
   // CRUD Operations for Ingredients
+
+  async getIngredients() {
+    return await this.prisma.ingredient.findMany();
+  }
   async createIngredient(data) {
     return await this.prisma.ingredient.create({
       data,
@@ -58,6 +92,10 @@ class MySQLService {
   }
 
   // CRUD Operations for UserPrompts
+
+  async getUserPrompts() {
+    return await this.prisma.userPrompt.findMany();
+  }
   async createUserPrompt(data) {
     return await this.prisma.userPrompt.create({
       data,
@@ -84,6 +122,10 @@ class MySQLService {
   }
 
   // CRUD Operations for AIResponses
+  async getAIResponses() {
+    return await this.prisma.aIResponse.findMany();
+  }
+
   async createAIResponse(data) {
     return await this.prisma.aIResponse.create({
       data,
@@ -110,6 +152,10 @@ class MySQLService {
   }
 
   // CRUD Operations for Recipes
+
+  async getRecipes() {
+    return await this.prisma.recipe.findMany();
+  }
   async createRecipe(data) {
     return await this.prisma.recipe.create({
       data,
@@ -136,6 +182,10 @@ class MySQLService {
   }
 
   // CRUD Operations for Instructions
+
+  async getInstructions() {
+    return await this.prisma.instruction.findMany();
+  }
   async createInstruction(data) {
     return await this.prisma.instruction.create({
       data,
@@ -162,6 +212,10 @@ class MySQLService {
   }
 
   // CRUD Operations for RecipeIngredients
+
+  async getRecipeIngredients() {
+    return await this.prisma.recipeIngredient.findMany();
+  }
   async createRecipeIngredient(data) {
     return await this.prisma.recipeIngredient.create({
       data,
@@ -188,6 +242,10 @@ class MySQLService {
   }
 
   // CRUD Operations for RecipeModifications
+  async getRecipeModifications() {
+    return await this.prisma.recipeModification.findMany();
+  }
+
   async createRecipeModification(data) {
     return await this.prisma.recipeModification.create({
       data,
@@ -214,6 +272,10 @@ class MySQLService {
   }
 
   // CRUD Operations for ModificationResponses
+  async getModificationResponses() {
+    return await this.prisma.modificationResponse.findMany();
+  }
+
   async createModificationResponse(data) {
     return await this.prisma.modificationResponse.create({
       data,
@@ -240,6 +302,10 @@ class MySQLService {
   }
 
   // CRUD Operations for UserRecipes
+  async getUserRecipes() {
+    return await this.prisma.userRecipe.findMany();
+  }
+
   async createUserRecipe(data) {
     return await this.prisma.userRecipe.create({
       data,
@@ -264,8 +330,6 @@ class MySQLService {
       where: { id },
     });
   }
-
-  // Additional methods as needed...
 }
 
 export { MySQLService };

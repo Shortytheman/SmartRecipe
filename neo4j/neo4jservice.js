@@ -47,6 +47,12 @@ class Neo4jService {
     }
   }
 
+  async getAll(model) {
+    const label = model.charAt(0).toUpperCase() + model.slice(1);
+    const result = await this.query(`MATCH (n:${label}) RETURN n`);
+    return result.records.map(record => record.get('n').properties);
+  }
+
   // Node operations
   async createNode(label, properties) {
     const timestamp = Date.now();
