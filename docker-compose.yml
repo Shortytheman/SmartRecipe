@@ -16,11 +16,17 @@ services:
       - MONGODB_URI=mongodb://mongo_db:27017/smartrecipe
       - DATABASE_URL=mysql://root:password@mysql_db:3306/smartrecipe
 
+    command: sh -c "sleep 10 && npx prisma migrate deploy && npm start"
+
   mysql_db:
     image: mysql:8.0
     environment:
       MYSQL_ROOT_PASSWORD: password
       MYSQL_DATABASE: smartrecipe
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 5s
+      retries: 10
     volumes:
       - mysql_data:/var/lib/mysql
 
