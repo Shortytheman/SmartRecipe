@@ -17,13 +17,26 @@ const prisma = new PrismaClient({
     },
 });
 
-prisma.$connect()
-    .then(() => {
-        console.log('Connected to MySQL via Prisma successfully.');
-    })
-    .catch((error) => {
-        console.error('Error connecting to MySQL via Prisma:', error);
-        process.exit(1);
-    });
+const connectWithRetry = async () => {
+    const maxRetries = 5;
+    const retryDelay = 5000; // 5 seconds
 
-export { prisma }; 
+    for (let i = 0; i < maxRetries; i++) {
+        try {
+            await prisma.$connect();
+            console.log('Connected to MySQL via Prisma successfully.');
+            return;
+        } catch (error) {
+            if (i === maxRetries - 1) {
+                console.error('Failed to connect to MySQL after multiple attempts:', error);
+                process.exit(1);
+            }
+            console.log(`MySQL connection attempt ${i + 1} failed. Retrying in ${retryDelay/1000} seconds...`);
+            await new Promise(resolve => setTimeout(resolve, retryDelay));
+        }
+    }
+};
+
+await connectWithRetry();
+
+export { prisma };

@@ -5,8 +5,8 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
+    "start": "node app.js",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node index.js",
     "dev": "nodemon app.js",
     "docker:up": "docker compose up -d",
     "docker:down": "docker compose down",
@@ -15,6 +15,7 @@
     "seed:mongo": "node mongoDB/seed.js",
     "seed:neo4j": "node neo4j/neo4jSeeder.js",
     "seed:mysql": "node prisma/seed.js",
+    "seed": "node prisma/seed.js && node neo4j/neo4jSeeder.js && node mongoDB/seed.js",
     "seed:all": "node mongoDB/seed.js & node neo4j/neo4jSeeder.js & node prisma/seed.js"
   },
   "keywords": [],
