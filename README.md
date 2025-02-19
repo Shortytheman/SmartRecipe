@@ -43,3 +43,18 @@ return all recipes
 http://localhost:7474/browser/ for Neo4j
 
 MongoDB Compass for MongoDB
+
+## Google cloud hosting commands
+
+# First clone the repository
+git clone https://github.com/Shortytheman/SmartRecipe.git
+cd SmartRecipe
+
+# Then checkout the specific branch
+git switch google-cloud
+
+# Build and start
+docker-compose up --build -d
+
+# Run seeders
+docker-compose exec app npm run seed
