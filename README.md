@@ -67,3 +67,6 @@ docker-compose up -d
 
 # Remove the container
 docker rmi smartrecipe_app
+
+# Show logs
+docker-compose logs app

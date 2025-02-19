@@ -6,15 +6,16 @@ services:
     ports:
       - "3001:3000"
     depends_on:
-      mysql_db:
-        condition: service_healthy
+      - mysql_db
+      - mongo_db
+      - neo4j_db
     environment:
       - NEO4J_URI=bolt://neo4j_db:7687
       - NEO4J_USER=neo4j
       - NEO4J_PASSWORD=password
       - MONGODB_URI=mongodb://mongo_db:27017/smartrecipe
       - DATABASE_URL=mysql://root:password@mysql_db:3306/smartrecipe
-    restart: unless-stopped  # Add this line
+    restart: unless-stopped
     command: >
       sh -c "
         echo 'Waiting for MySQL...' &&
