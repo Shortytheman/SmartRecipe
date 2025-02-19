@@ -26,16 +26,16 @@ return all recipes
 
 1. Install dependencies: `npm install`
 2. Start the server: `npm run dev`
-3. Access the API at `http://localhost:3000`
+3. Access the API at `http://localhost:3001`
 
 ## Example API Calls
 
 ### Get Recipe
-`http://localhost:3000/mongodb/recipe/:id`
+`http://localhost:3001/mongodb/recipe/:id`
 
-`http://localhost:3000/neo4j/recipe/:id`
+`http://localhost:3001/neo4j/recipe/:id`
 
-`http://localhost:3000/mysql/recipe/:id`
+`http://localhost:3001/mysql/recipe/:id`
 
 
 ## Visualizations
