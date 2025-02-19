@@ -35,36 +35,36 @@ async function setupDatabase() {
       USE smartrecipe;
       
       -- Drop existing users
-      DROP USER IF EXISTS 'admin'@'localhost';
-      DROP USER IF EXISTS 'read_only_user'@'localhost';
-      DROP USER IF EXISTS 'restricted_user'@'localhost';
-      DROP USER IF EXISTS 'app_user'@'localhost';
+      DROP USER IF EXISTS 'admin'@'mysql_db';
+      DROP USER IF EXISTS 'read_only_user'@'mysql_db';
+      DROP USER IF EXISTS 'restricted_user'@'mysql_db';
+      DROP USER IF EXISTS 'app_user'@'mysql_db';
       
       -- Create users
-      CREATE USER 'admin'@'localhost' IDENTIFIED BY 'admin_password';
-      CREATE USER 'read_only_user'@'localhost' IDENTIFIED BY 'read_only_password';
-      CREATE USER 'restricted_user'@'localhost' IDENTIFIED BY 'restricted_password';
-      CREATE USER 'app_user'@'localhost' IDENTIFIED BY 'app_user_password';
+      CREATE USER 'admin'@'mysql_db' IDENTIFIED BY 'admin_password';
+      CREATE USER 'read_only_user'@'mysql_db' IDENTIFIED BY 'read_only_password';
+      CREATE USER 'restricted_user'@'mysql_db' IDENTIFIED BY 'restricted_password';
+      CREATE USER 'app_user'@'mysql_db' IDENTIFIED BY 'app_user_password';
       
       -- Grant privileges
-      GRANT ALL PRIVILEGES ON smartrecipe.* TO 'admin'@'localhost';
-      GRANT SELECT ON smartrecipe.* TO 'read_only_user'@'localhost';
+      GRANT ALL PRIVILEGES ON smartrecipe.* TO 'admin'@'mysql_db';
+      GRANT SELECT ON smartrecipe.* TO 'read_only_user'@'mysql_db';
       
       -- App user privileges
-      GRANT SELECT, INSERT, UPDATE ON smartrecipe.users TO 'app_user'@'localhost';
-      GRANT SELECT, INSERT, UPDATE ON smartrecipe.userPrompts TO 'app_user'@'localhost';
-      GRANT SELECT, INSERT, UPDATE ON smartrecipe.aiResponses TO 'app_user'@'localhost';
-      GRANT SELECT, INSERT, UPDATE ON smartrecipe.ingredients TO 'app_user'@'localhost';
-      GRANT SELECT, INSERT, UPDATE ON smartrecipe.instructions TO 'app_user'@'localhost';
-      GRANT SELECT, INSERT, UPDATE ON smartrecipe.modificationResponses TO 'app_user'@'localhost';
-      GRANT SELECT, INSERT, UPDATE ON smartrecipe.recipeIngredients TO 'app_user'@'localhost';
-      GRANT SELECT, INSERT, UPDATE ON smartrecipe.recipeModifications TO 'app_user'@'localhost';
-      GRANT SELECT, INSERT, UPDATE ON smartrecipe.recipes TO 'app_user'@'localhost';
-      GRANT SELECT, INSERT, UPDATE ON smartrecipe.userRecipes TO 'app_user'@'localhost';
+      GRANT SELECT, INSERT, UPDATE ON smartrecipe.users TO 'app_user'@'mysql_db';
+      GRANT SELECT, INSERT, UPDATE ON smartrecipe.userPrompts TO 'app_user'@'mysql_db';
+      GRANT SELECT, INSERT, UPDATE ON smartrecipe.aiResponses TO 'app_user'@'mysql_db';
+      GRANT SELECT, INSERT, UPDATE ON smartrecipe.ingredients TO 'app_user'@'mysql_db';
+      GRANT SELECT, INSERT, UPDATE ON smartrecipe.instructions TO 'app_user'@'mysql_db';
+      GRANT SELECT, INSERT, UPDATE ON smartrecipe.modificationResponses TO 'app_user'@'mysql_db';
+      GRANT SELECT, INSERT, UPDATE ON smartrecipe.recipeIngredients TO 'app_user'@'mysql_db';
+      GRANT SELECT, INSERT, UPDATE ON smartrecipe.recipeModifications TO 'app_user'@'mysql_db';
+      GRANT SELECT, INSERT, UPDATE ON smartrecipe.recipes TO 'app_user'@'mysql_db';
+      GRANT SELECT, INSERT, UPDATE ON smartrecipe.userRecipes TO 'app_user'@'mysql_db';
       
       -- Restricted user privileges
-      GRANT SELECT ON smartrecipe.users TO 'restricted_user'@'localhost';
-      GRANT SELECT ON smartrecipe.userPrompts TO 'restricted_user'@'localhost';
+      GRANT SELECT ON smartrecipe.users TO 'restricted_user'@'mysql_db';
+      GRANT SELECT ON smartrecipe.userPrompts TO 'restricted_user'@'mysql_db';
       
       FLUSH PRIVILEGES;
     `);

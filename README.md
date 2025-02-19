@@ -58,3 +58,12 @@ docker-compose up --build -d
 
 # Run seeders
 docker-compose exec app npm run seed
+
+# Stop the container
+docker-compose down
+
+# Start the container
+docker-compose up -d
+
+# Remove the container
+docker rmi smartrecipe_app

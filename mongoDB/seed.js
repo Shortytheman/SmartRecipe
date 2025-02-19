@@ -3,8 +3,7 @@ import mongoose from 'mongoose';
 import { faker } from '@faker-js/faker';
 import models from './mongoSchema.js';
 
-const DATABASE_NAME = 'smartrecipe';
-const MONGODB_URI = `mongodb://localhost:27017/${DATABASE_NAME}`;
+const MONGODB_URI = `mongodb://mongo_db:27017/smartrecipe`;
 
 const seedMongoDB = async () => {
     try {
