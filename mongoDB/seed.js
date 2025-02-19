@@ -9,7 +9,7 @@ const seedMongoDB = async () => {
     try {
         // Connect to MongoDB
         await mongoose.connect(MONGODB_URI);
-        console.log(`Connected to MongoDB - Database: ${DATABASE_NAME}`);
+        console.log(`Connected to MongoDB`);
 
         // Drop the database if it exists
         await mongoose.connection.dropDatabase();
