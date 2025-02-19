@@ -3,7 +3,7 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const MONGODB_URI = process.env.MONGODB_URI;
+const MONGODB_URI = 'mongodb://mongo_db:27017/smartrecipe';
 
 if (!MONGODB_URI) {
     throw new Error('MONGODB_URI is not defined in the environment variables.');

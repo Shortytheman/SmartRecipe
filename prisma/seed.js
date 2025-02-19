@@ -11,7 +11,7 @@ const prisma = new PrismaClient();
 
 // Database setup configuration
 const dbConfig = {
-    host: 'localhost',
+    host: 'mysql_db',
     user: 'root',
     password: 'password',
     port: 3306,
