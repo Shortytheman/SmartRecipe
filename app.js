@@ -51,28 +51,16 @@ app.use('/docs', swaggerUi.serve, swaggerUi.setup(specs, swaggerOptions));
  *                   - $ref: '#/components/schemas/Ingredient'
  *       400:
  *         description: Invalid database type
-*   post:
- *     summary: Create new item in specified database
- *     tags: [Dynamic Routes]
+ *   post:
+ *     summary: Create new item
  *     parameters:
  *       - $ref: '#/components/parameters/dbType'
  *       - $ref: '#/components/parameters/model'
  *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             oneOf:
- *               - $ref: '#/components/schemas/Recipe'
- *               - $ref: '#/components/schemas/User'
- *               - $ref: '#/components/schemas/Ingredient'
- *               - $ref: '#/components/schemas/Instruction'
- *               - $ref: '#/components/schemas/RecipeIngredient'
+ *       $ref: '#/components/requestBodies/DynamicModel'
  *     responses:
  *       200:
  *         description: Created item
- *       400:
- *         description: Invalid request
  */
 
 /**
@@ -98,39 +86,16 @@ app.use('/docs', swaggerUi.serve, swaggerUi.setup(specs, swaggerOptions));
  *       404:
  *         description: Item not found
  *   put:
- *     summary: Update item by ID
- *     tags: [Dynamic Routes]
+ *     summary: Update item
  *     parameters:
  *       - $ref: '#/components/parameters/dbType'
  *       - $ref: '#/components/parameters/model'
  *       - $ref: '#/components/parameters/modelId'
  *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             oneOf:
- *               - $ref: '#/components/schemas/Recipe'
- *               - $ref: '#/components/schemas/User'
- *               - $ref: '#/components/schemas/Ingredient'
- *               - $ref: '#/components/schemas/Instruction'
- *               - $ref: '#/components/schemas/RecipeIngredient'
+ *       $ref: '#/components/requestBodies/DynamicModel'
  *     responses:
  *       200:
  *         description: Updated item
- *         content:
- *           application/json:
- *             schema:
- *               oneOf:
- *                 - $ref: '#/components/schemas/Recipe'
- *                 - $ref: '#/components/schemas/User'
- *                 - $ref: '#/components/schemas/Ingredient'
- *                 - $ref: '#/components/schemas/Instruction'
- *                 - $ref: '#/components/schemas/RecipeIngredient'
- *       404:
- *         description: Item not found
- *       400:
- *         description: Invalid request
  *   delete:
  *     summary: Delete item by ID
  *     tags: [Dynamic Routes]
