@@ -2,5 +2,5 @@
 builder = "NIXPACKS"
 
 [deploy]
-startCommand = "prisma generate && npm start"
+startCommand = "npx prisma generate && npm start"
 restartPolicyType = "ON_FAILURE"
