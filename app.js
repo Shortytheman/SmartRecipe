@@ -52,15 +52,25 @@ app.use('/docs', swaggerUi.serve, swaggerUi.setup(specs, swaggerOptions));
  *       400:
  *         description: Invalid database type
  *   post:
- *     summary: Create new item
+ *     summary: Create new item in specified database
+ *     tags: [Dynamic Routes]
  *     parameters:
  *       - $ref: '#/components/parameters/dbType'
  *       - $ref: '#/components/parameters/model'
  *     requestBody:
- *       $ref: '#/components/requestBodies/DynamicModel'
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             oneOf:
+ *               - $ref: '#/components/schemas/Recipe'
+ *               - $ref: '#/components/schemas/User'
+ *               - $ref: '#/components/schemas/Ingredient'
  *     responses:
  *       200:
  *         description: Created item
+ *       400:
+ *         description: Invalid request
  */
 
 /**
@@ -86,16 +96,26 @@ app.use('/docs', swaggerUi.serve, swaggerUi.setup(specs, swaggerOptions));
  *       404:
  *         description: Item not found
  *   put:
- *     summary: Update item
+ *     summary: Update item by ID
+ *     tags: [Dynamic Routes]
  *     parameters:
  *       - $ref: '#/components/parameters/dbType'
  *       - $ref: '#/components/parameters/model'
  *       - $ref: '#/components/parameters/modelId'
  *     requestBody:
- *       $ref: '#/components/requestBodies/DynamicModel'
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             oneOf:
+ *               - $ref: '#/components/schemas/Recipe'
+ *               - $ref: '#/components/schemas/User'
+ *               - $ref: '#/components/schemas/Ingredient'
  *     responses:
  *       200:
  *         description: Updated item
+ *       404:
+ *         description: Item not found
  *   delete:
  *     summary: Delete item by ID
  *     tags: [Dynamic Routes]

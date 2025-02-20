@@ -172,49 +172,6 @@ const options = {
             comment: { type: 'string', example: 'al dente' }
           }
         }
-      },
-      requestBodies: {
-        DynamicModel: {
-          description: 'Model data based on selected model type',
-          content: {
-            'application/json': {
-              schema: {
-                oneOf: [
-                  {
-                    $ref: '#/components/schemas/Recipe',
-                    title: 'recipes'
-                  },
-                  {
-                    $ref: '#/components/schemas/User',
-                    title: 'users'
-                  },
-                  {
-                    $ref: '#/components/schemas/Ingredient',
-                    title: 'ingredients'
-                  },
-                  {
-                    $ref: '#/components/schemas/Instruction',
-                    title: 'instructions'
-                  },
-                  {
-                    $ref: '#/components/schemas/RecipeIngredient',
-                    title: 'recipeIngredients'
-                  }
-                ],
-                discriminator: {
-                  propertyName: 'model',
-                  mapping: {
-                    'recipes': '#/components/schemas/Recipe',
-                    'users': '#/components/schemas/User',
-                    'ingredients': '#/components/schemas/Ingredient',
-                    'instructions': '#/components/schemas/Instruction',
-                    'recipeIngredients': '#/components/schemas/RecipeIngredient'
-                  }
-                }
-              }
-            }
-          }
-        }
       }
     }    
   },
