@@ -56,9 +56,61 @@ const validateDbType = (req, res, next) => {
     next();
 };
 
-// Helper function to capitalize model names
+
 const capitalize = (str) => str.charAt(0).toUpperCase() + str.slice(1);
 
+
+/**
+ * @swagger
+ * components:
+ *   parameters:
+ *     dbType:
+ *       in: path
+ *       name: dbType
+ *       required: true
+ *       schema:
+ *         type: string
+ *         enum: [mysql, mongodb]
+ *       description: Database type to query (mysql or mongodb)
+ *     modelId:
+ *       in: path
+ *       name: id
+ *       required: true
+ *       schema:
+ *         type: string
+ *       description: ID of the model
+ *   schemas:
+ *     Recipe:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *         title:
+ *           type: string
+ *         description:
+ *           type: string
+ */
+
+/**
+ * @swagger
+ * /{dbType}/{model}:
+ *   get:
+ *     summary: Get all items from specified database
+ *     tags: [Dynamic Routes]
+ *     parameters:
+ *       - $ref: '#/components/parameters/dbType'
+ *       - name: model
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Model name (e.g., recipes, users)
+ *     responses:
+ *       200:
+ *         description: List of items
+ *       400:
+ *         description: Invalid database type
+ */
 app.get('/:dbType/:model', validateDbType, async (req, res) => {
     const { dbType, model } = req.params;
     console.log(`Calling method: get${capitalize(model)}`);
@@ -92,6 +144,31 @@ app.get('/:dbType/:model', validateDbType, async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /{dbType}/{model}:
+ *   post:
+ *     summary: Create new item in specified database
+ *     tags: [Dynamic Routes]
+ *     parameters:
+ *       - $ref: '#/components/parameters/dbType'
+ *       - name: model
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *     responses:
+ *       200:
+ *         description: Created item
+ *       400:
+ *         description: Invalid request
+ */
 app.post('/:dbType/:model', validateDbType, async (req, res) => {
     const { dbType, model } = req.params;
     const data = req.body;
@@ -126,6 +203,27 @@ app.post('/:dbType/:model', validateDbType, async (req, res) => {
     }
 });
 
+
+/**
+ * @swagger
+ * /{dbType}/{model}/{id}:
+ *   get:
+ *     summary: Get single item by ID
+ *     tags: [Dynamic Routes]
+ *     parameters:
+ *       - $ref: '#/components/parameters/dbType'
+ *       - name: model
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - $ref: '#/components/parameters/modelId'
+ *     responses:
+ *       200:
+ *         description: Single item
+ *       404:
+ *         description: Item not found
+ */
 app.get('/:dbType/:model/:id', validateDbType, async (req, res) => {
     const { dbType, model, id } = req.params;
     console.log(`Calling method: get${capitalize(model)}`);
@@ -161,6 +259,33 @@ app.get('/:dbType/:model/:id', validateDbType, async (req, res) => {
     }
 });
 
+
+/**
+ * @swagger
+ * /{dbType}/{model}/{id}:
+ *   put:
+ *     summary: Update item by ID
+ *     tags: [Dynamic Routes]
+ *     parameters:
+ *       - $ref: '#/components/parameters/dbType'
+ *       - name: model
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - $ref: '#/components/parameters/modelId'
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *     responses:
+ *       200:
+ *         description: Updated item
+ *       404:
+ *         description: Item not found
+ */
 app.put('/:dbType/:model/:id', validateDbType, async (req, res) => {
     const { dbType, model, id } = req.params;
     console.log(`Calling method: update${capitalize(model)}`);
@@ -178,6 +303,27 @@ app.put('/:dbType/:model/:id', validateDbType, async (req, res) => {
     }
 });
 
+
+/**
+ * @swagger
+ * /{dbType}/{model}/{id}:
+ *   delete:
+ *     summary: Delete item by ID
+ *     tags: [Dynamic Routes]
+ *     parameters:
+ *       - $ref: '#/components/parameters/dbType'
+ *       - name: model
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - $ref: '#/components/parameters/modelId'
+ *     responses:
+ *       204:
+ *         description: Item deleted
+ *       404:
+ *         description: Item not found
+ */
 app.delete('/:dbType/:model/:id', validateDbType, async (req, res) => {
     const { dbType, model, id } = req.params;
     console.log(`Calling method: delete${capitalize(model)}`);
@@ -195,6 +341,28 @@ app.delete('/:dbType/:model/:id', validateDbType, async (req, res) => {
     }
 });
 
+
+/**
+ * @swagger
+ * /health:
+ *   get:
+ *     summary: Check API health status
+ *     tags: [Health]
+ *     responses:
+ *       200:
+ *         description: API is healthy
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                 timestamp:
+ *                   type: string
+ *                 env:
+ *                   type: string
+ */
 app.get('/health', async (req, res) => {
     try {
         res.json({
@@ -206,6 +374,13 @@ app.get('/health', async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
+
+app.use('/docs', swaggerUi.serve, swaggerUi.setup(specs));
+app.get('/docs.json', (req, res) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.send(specs);
+});
+
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
