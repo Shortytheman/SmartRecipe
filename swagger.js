@@ -29,7 +29,6 @@ const specs = swaggerJsdoc(options);
 const swaggerOptions = {
   explorer: true,
   swaggerOptions: {
-    url: '/docs.json', 
     persistAuthorization: true
   }
 };
