@@ -282,25 +282,34 @@ app.put('/:dbType/:model/:id', validateDbType, async (req, res) => {
     const { dbType, model, id } = req.params;
     console.log(`Calling method: update${capitalize(model)}`);
     console.log(`Database type: ${dbType}\nModel: ${model}\nID: ${id}`);
+
     try {
-        if (dbType === 'mongodb' && !mongoose.Types.ObjectId.isValid(id)) {
-            return res.status(400).json({ error: 'Invalid ID format. ID must be a valid ObjectId.' });
+        let result;
+        if (dbType === 'mongodb') {
+            if (!mongoose.Types.ObjectId.isValid(id)) {
+                return res.status(400).json({ error: 'Invalid ID format. ID must be a valid ObjectId.' });
+            }
+            result = await req.dbService[`update${capitalize(model)}`](new mongoose.Types.ObjectId(id), req.body);
         } else {
             const numericId = parseInt(id, 10);
             if (isNaN(numericId)) {
                 return res.status(400).json({ error: 'Invalid ID format. ID must be a number.' });
             }
-            result = await req.dbService[`get${capitalize(model)}`](numericId);
+            result = await req.dbService[`update${capitalize(model)}`](numericId, req.body);
         }
 
-        const result = await req.dbService[`update${capitalize(model)}`](id, req.body);
-        res.json(result);
+        if (result) {
+            console.log(`${capitalize(model)} updated: ${JSON.stringify(result)}`);
+            res.json(result);
+        } else {
+            console.log(`${capitalize(model)} not found`);
+            res.status(404).json({ error: `${capitalize(model)} not found` });
+        }
     } catch (error) {
+        console.log(error);
         res.status(500).json({ error: error.message });
     }
 });
-
-
 
 app.delete('/:dbType/:model/:id', validateDbType, async (req, res) => {
     const { dbType, model, id } = req.params;
@@ -308,19 +317,29 @@ app.delete('/:dbType/:model/:id', validateDbType, async (req, res) => {
     console.log(`Database type: ${dbType}\nModel: ${model}\nID: ${id}`);
 
     try {
-        if (dbType === 'mongodb' && !mongoose.Types.ObjectId.isValid(id)) {
-            return res.status(400).json({ error: 'Invalid ID format. ID must be a valid ObjectId.' });
+        let result;
+        if (dbType === 'mongodb') {
+            if (!mongoose.Types.ObjectId.isValid(id)) {
+                return res.status(400).json({ error: 'Invalid ID format. ID must be a valid ObjectId.' });
+            }
+            result = await req.dbService[`delete${capitalize(model)}`](new mongoose.Types.ObjectId(id));
         } else {
             const numericId = parseInt(id, 10);
             if (isNaN(numericId)) {
                 return res.status(400).json({ error: 'Invalid ID format. ID must be a number.' });
             }
-            result = await req.dbService[`get${capitalize(model)}`](numericId);
+            result = await req.dbService[`delete${capitalize(model)}`](numericId);
         }
 
-        await req.dbService[`delete${capitalize(model)}`](id);
-        res.status(204).send();
+        if (result) {
+            console.log(`${capitalize(model)} deleted`);
+            res.status(204).send();
+        } else {
+            console.log(`${capitalize(model)} not found`);
+            res.status(404).json({ error: `${capitalize(model)} not found` });
+        }
     } catch (error) {
+        console.log(error);
         res.status(500).json({ error: error.message });
     }
 });
