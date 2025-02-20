@@ -13,6 +13,16 @@ process.on('unhandledRejection', (err) => {
     console.error('Unhandled Rejection:', err);
   });
 
+app.get('/', (req, res) => {
+    res.json({ status: 'ok', message: 'API is running' });
+});
+
+// Add error handling middleware at the bottom
+app.use((err, req, res, next) => {
+    console.error(err.stack);
+    res.status(500).json({ error: 'Something broke!' });
+});
+
 app.use(cors({
     origin: '*',
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
@@ -180,6 +190,18 @@ app.delete('/:dbType/:model/:id', validateDbType, async (req, res) => {
 
         await req.dbService[`delete${capitalize(model)}`](id);
         res.status(204).send();
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.get('/health', async (req, res) => {
+    try {
+        res.json({
+            status: 'ok',
+            timestamp: new Date(),
+            env: process.env.NODE_ENV
+        });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
