@@ -6,9 +6,12 @@ services:
     ports:
       - "${PORT:-3001}:${PORT:-3000}"
     depends_on:
-      - mysql_db
-      - mongo_db
-      - neo4j_db
+      mysql_db:
+        condition: service_healthy
+      mongo_db:
+        condition: service_started
+      neo4j_db:
+        condition: service_started
     environment:
       - NEO4J_URI=${NEO4J_URI}
       - NEO4J_USER=${NEO4J_USER}
@@ -17,12 +20,10 @@ services:
       - DATABASE_URL=${DATABASE_URL}
     restart: unless-stopped
     command: >
+      command: >
       sh -c "
-        echo 'Waiting for MySQL...' &&
-        /wait-for-it.sh mysql_db:3306 -t 60 &&
-        echo 'Running Prisma migrations...' &&
-        npx prisma migrate deploy &&
         echo 'Starting app...' &&
+        npx prisma migrate deploy &&
         npm start
       "
 
