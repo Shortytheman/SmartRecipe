@@ -2,5 +2,5 @@
 builder = "NIXPACKS"
 
 [deploy]
-startCommand = "npm run migrate && npm start"
+startCommand = "prisma generate && npm start"
 restartPolicyType = "ON_FAILURE"
