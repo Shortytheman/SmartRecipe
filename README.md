@@ -111,3 +111,26 @@ docker-compose exec app apt-get update
 docker-compose exec app apt-get install -y curl
 
 
+# Railway commands
+
+# Connect to the Railway project
+railway link
+
+# Run migrations
+railway run npx prisma migrate deploy
+
+# Generate Prisma client
+railway run npx prisma generate
+
+# Deploy
+railway up
+
+# Pull
+railway pull
+
+
+# Run seeders
+railway run npm run seed:mysql
+railway run npm run seed:mongo
+
+

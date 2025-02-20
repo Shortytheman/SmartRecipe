@@ -2,5 +2,8 @@
 builder = "NIXPACKS"
 
 [deploy]
-startCommand = "npx prisma generate && npx prisma migrate deploy && npm start"
+startCommand = "npm start"
 restartPolicyType = "ON_FAILURE"
+
+[deploy.env]
+PORT = "3000"
