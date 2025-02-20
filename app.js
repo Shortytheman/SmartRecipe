@@ -1,13 +1,27 @@
 import "dotenv/config";
-import { specs, swaggerUi } from "./swagger.js";
+import { specs, swaggerUi, swaggerOptions } from "./swagger.js";
 import { MySQLService } from "./prisma/services/mysqlService.js";
 //import { Neo4jService } from "./neo4j/neo4jservice.js";
 import { MongoService } from "./mongoDB/mongoService.js";
 import cors from 'cors';
+import { dirname, join } from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 import mongoose from "mongoose";
 import express from "express";
 const app = express();
+
+app.use('/docs', express.static(join(__dirname, 'node_modules/swagger-ui-dist')));
+
+app.use('/docs', swaggerUi.serve);
+app.use('/docs', swaggerUi.serve, swaggerUi.setup(specs, swaggerOptions));
+app.get('/docs.json', (req, res) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.send(specs);
+});
 
 process.on('unhandledRejection', (err) => {
     console.error('Unhandled Rejection:', err);
@@ -373,12 +387,6 @@ app.get('/health', async (req, res) => {
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
-});
-
-app.use('/docs', swaggerUi.serve, swaggerUi.setup(specs));
-app.get('/docs.json', (req, res) => {
-  res.setHeader('Content-Type', 'application/json');
-  res.send(specs);
 });
 
 

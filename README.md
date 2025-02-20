@@ -134,3 +134,6 @@ railway run npm run seed:mysql
 railway run npm run seed:mongo
 
 
+# APP URL
+
+humble-transformation-production.up.railway.app
