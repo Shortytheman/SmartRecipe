@@ -18,11 +18,7 @@ const options = {
       {
         url: 'https://humble-transformation-production.up.railway.app',
         description: 'Production server',
-      },
-      {
-        url: 'http://localhost:3000',
-        description: 'Local server',
-      },
+      }
     ],
   },
   apis: ['./app.js'],
@@ -31,9 +27,9 @@ const options = {
 const specs = swaggerJsdoc(options);
 
 const swaggerOptions = {
-  customCss: '.swagger-ui .topbar { display: none }',
-  customSiteTitle: "Smart Recipe API Documentation",
+  explorer: true,
   swaggerOptions: {
+    url: '/docs.json', 
     persistAuthorization: true
   }
 };

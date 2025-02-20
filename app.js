@@ -15,9 +15,9 @@ import express from "express";
 const app = express();
 
 app.use('/docs', express.static(join(__dirname, 'node_modules/swagger-ui-dist')));
-
 app.use('/docs', swaggerUi.serve);
 app.use('/docs', swaggerUi.serve, swaggerUi.setup(specs, swaggerOptions));
+
 app.get('/docs.json', (req, res) => {
   res.setHeader('Content-Type', 'application/json');
   res.send(specs);
