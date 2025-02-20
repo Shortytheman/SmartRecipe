@@ -10,16 +10,9 @@ const prisma = new PrismaClient();
 
 
 // Database setup configuration
-const dbConfig = {
-    host: 'mysql_db',
-    user: 'root',
-    password: 'password',
-    port: 3306,
-    multipleStatements: true
-};
 
 async function setupDatabase() {
-    const connection = await mysql.createConnection(dbConfig);
+    const connection = await mysql.createConnection(process.env.DATABASE_URL);
 
     // Ensure we're using the correct database
     await connection.query('CREATE DATABASE IF NOT EXISTS smartrecipe');

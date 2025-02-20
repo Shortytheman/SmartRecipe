@@ -2,8 +2,11 @@
 import mongoose from 'mongoose';
 import { faker } from '@faker-js/faker';
 import models from './mongoSchema.js';
+import dotenv from 'dotenv';
 
-const MONGODB_URI = `mongodb://mongo_db:27017/smartrecipe`;
+dotenv.config();
+
+const MONGODB_URI = process.env.MONGODB_URI;
 
 const seedMongoDB = async () => {
     try {
