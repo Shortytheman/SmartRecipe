@@ -6,14 +6,14 @@ class MySQLService {
   }
 
   async getAll(model) {
-    const modelName = model.charAt(0).toUpperCase() + model.slice(1); // Capitalize model name
-    const methodName = `get${modelName}s`; // Construct the pluralized method name
+    const modelName = model.charAt(0).toUpperCase() + model.slice(1);
+    const methodName = `get${modelName}s`;
 
     if (typeof this[methodName] !== 'function') {
       throw new Error(`Method ${methodName} not found for model ${model}`);
     }
 
-    return this[methodName](); // Call the dynamically constructed method
+    return this[methodName]();
   }
 
   async createMethod(model, data) {
@@ -23,6 +23,9 @@ class MySQLService {
 
     console.log(modelName)
     console.log(methodName)
+    if (modelName === 'Recipes') {
+      return this.createRecipeWithIngredientsAndInstructions(data)
+    }
 
     if (typeof this[methodName] !== 'function') {
       throw new Error(`Method ${methodName} not found for model ${model}`);
@@ -156,10 +159,48 @@ class MySQLService {
   async getRecipes() {
     return await this.prisma.recipe.findMany();
   }
-  async createRecipe(data) {
-    return await this.prisma.recipe.create({
-      data,
-    });
+  async createRecipeWithIngredientsAndInstructions(recipeData) {
+    return await prisma.$transaction(async (tx) => {
+      const recipe = await tx.recipe.create({
+        data: {
+          aiResponseId: recipeData.aiResponseId,
+          name: recipeData.name,
+          prep: recipeData.prep,
+          cook: recipeData.cook,
+          portionSize: recipeData.portionSize,
+          finalComment: recipeData.finalComment,
+        }
+      })
+      for (const ingredient of recipeData.ingredients) {
+        let existingIngredient = await tx.ingredient.findUnique({
+          where: { name: recipeData.ingredient.name }
+        })
+        if (!existingIngredient) {
+          existingIngredient = await tx.ingredient.create({
+            data: { name: recipeData.ingredient.name }
+          })
+        }
+        await tx.recipeIngredient.create({
+          data: {
+            recipeId: recipe.id,
+            ingredientId: existingIngredient.id,
+            value: ingredient.value,
+            unit: ingredient.unit,
+            comment: ingredient.comment
+          }
+        })
+      }
+      for (const instruction of recipeData.instructions) {
+        await tx.instruction.create({
+          data: {
+            recipeId: recipe.id,
+            part: instruction.part,
+            steps: instruction.steps
+          }
+        })
+      }
+      return recipe
+    })
   }
 
   async getRecipe(id) {
