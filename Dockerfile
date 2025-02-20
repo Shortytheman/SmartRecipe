@@ -1,21 +1,30 @@
-FROM node:18
+FROM node:18-alpine
 
 WORKDIR /app
 
+# Install necessary tools
+RUN apk add --no-cache \
+    netcat-openbsd \
+    mysql-client
+
+# Copy package files first for better caching
 COPY package*.json ./
 RUN npm install
 
-COPY . .
-
-# Generate Prisma Client
+# Copy prisma schema and generate client
+COPY prisma ./prisma/
 RUN npx prisma generate
 
-# Create a script to handle database setup
-COPY docker-entrypoint.sh /usr/local/bin/
-RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+# Copy wait-for-it script and make it executable
+COPY wait-for-it.sh /wait-for-it.sh
+RUN chmod +x /wait-for-it.sh
 
-EXPOSE 3001
+# Copy the rest of the application
+COPY . .
 
-# Use the entrypoint script
-ENTRYPOINT ["docker-entrypoint.sh"]
-CMD ["npm", "start"]
+EXPOSE 3000
+
+# Wait for databases and start app
+CMD sh -c "/wait-for-it.sh mysql_db:3306 && \
+           npx prisma migrate deploy && \
+           npm start"

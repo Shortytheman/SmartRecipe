@@ -19,7 +19,7 @@ services:
     command: >
       sh -c "
         echo 'Waiting for MySQL...' &&
-        sleep 10 &&
+        /wait-for-it.sh mysql_db:3306 -t 60 &&
         echo 'Running Prisma migrations...' &&
         npx prisma migrate deploy &&
         echo 'Starting app...' &&
