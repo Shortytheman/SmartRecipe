@@ -1,59 +1,27 @@
 version: '3.3'
-
 services:
   app:
     build: .
     ports:
-      - "${PORT:-3001}:${PORT:-3000}"
-    depends_on:
-      mysql_db:
-        condition: service_healthy
-      mongo_db:
-        condition: service_started
-      neo4j_db:
-        condition: service_started
+      - "3000:3000"
     environment:
       - NEO4J_URI=${NEO4J_URI}
       - NEO4J_USER=${NEO4J_USER}
       - NEO4J_PASSWORD=${NEO4J_PASSWORD}
       - MONGODB_URI=${MONGODB_URI}
       - DATABASE_URL=${DATABASE_URL}
-    restart: unless-stopped
-    command: >
-      command: >
-      sh -c "
-        echo 'Starting app...' &&
-        npx prisma migrate deploy &&
-        npm start
-      "
+    restart: always
 
   mysql_db:
     image: mysql:8.0
     environment:
-      MYSQL_ROOT_PASSWORD: password
-      MYSQL_DATABASE: smartrecipe
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
-    volumes:
-      - mysql_data:/var/lib/mysql
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
 
   mongo_db:
     image: mongo:4.4
-    volumes:
-      - mongo_data:/data/db
 
   neo4j_db:
     image: neo4j:4.3
     environment:
-      NEO4J_AUTH: neo4j/password
-    volumes:
-      - neo4j_data:/data
-
-volumes:
-  mysql_data:
-  mongo_data:
-  neo4j_data:
+      NEO4J_AUTH: ${NEO4J_USER}/${NEO4J_PASSWORD}
