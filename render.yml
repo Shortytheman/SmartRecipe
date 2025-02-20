@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: smartrecipe-full
+    env: docker
+    plan: free
+    dockerCommand: docker-compose up
+    disk:
+      name: data
+      mountPath: /data
+      sizeGB: 1
