@@ -15,6 +15,73 @@ const options = {
         description: 'Production server',
       }
     ],
+    components: {
+      parameters: {
+        dbType: {
+          in: 'path',
+          name: 'dbType',
+          required: true,
+          schema: {
+            type: 'string',
+            enum: ['mysql', 'mongodb']
+          },
+          description: 'Database type to query'
+        },
+        model: {
+          in: 'path',
+          name: 'model',
+          required: true,
+          schema: {
+            type: 'string',
+            enum: [
+              'recipes',
+              'users',
+              'ingredients',
+              'instructions',
+              'userRecipes',
+              'recipeIngredients',
+              'userPrompts',
+              'aiResponses'
+            ]
+          },
+          description: 'Model to query'
+        }
+      },
+      schemas: {
+        Recipe: {
+          type: 'object',
+          properties: {
+            id: { type: 'string' },
+            title: { type: 'string' },
+            description: { type: 'string' },
+            ingredients: { 
+              type: 'array',
+              items: { type: 'string' }
+            },
+            instructions: {
+              type: 'array',
+              items: { type: 'string' }
+            }
+          }
+        },
+        User: {
+          type: 'object',
+          properties: {
+            id: { type: 'string' },
+            name: { type: 'string' },
+            email: { type: 'string' }
+          }
+        },
+        Ingredient: {
+          type: 'object',
+          properties: {
+            id: { type: 'string' },
+            name: { type: 'string' },
+            quantity: { type: 'string' }
+          }
+        }
+      }
+    }
   },
   apis: ['./app.js'],
 };
