@@ -17,8 +17,8 @@
     "seed:mysql": "node prisma/seed.js",
     "seed": "node prisma/seed.js && node neo4j/neo4jSeeder.js && node mongoDB/seed.js",
     "seed:all": "node mongoDB/seed.js & node neo4j/neo4jSeeder.js & node prisma/seed.js",
-    "postinstall": "prisma generate",
-    "migrate": "prisma migrate deploy"
+    "postinstall": "prisma generate --schema=./prisma/schema.prisma",
+    "migrate": "prisma migrate deploy --schema=./prisma/schema.prisma"
   },
   "keywords": [],
   "author": "",
