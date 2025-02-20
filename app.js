@@ -20,12 +20,12 @@ app.use(cors({
   }));
 app.use(express.json());
 
-app.use('/docs', express.static(join(__dirname, 'node_modules/swagger-ui-dist')));
-app.use('/docs', swaggerUi.serve);
 app.get('/docs.json', (req, res) => {
     res.setHeader('Content-Type', 'application/json');
     res.send(specs);
-  });
+});
+
+app.use('/docs', swaggerUi.serve);
 app.use('/docs', swaggerUi.serve, swaggerUi.setup(specs, swaggerOptions));
 
 app.get('/', (req, res) => {
