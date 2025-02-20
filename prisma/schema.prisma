@@ -71,9 +71,9 @@ model Recipe {
   updatedAt         DateTime             @updatedAt
   deletedAt         DateTime?
   aiResponse        AIResponse           @relation(fields: [aiResponseId], references: [id])
-  instructions      Instruction[]
-  recipeIngredients RecipeIngredient[]
-  modifications     RecipeModification[]
+  instructions      Instruction[]        @relation(onDelete: Cascade)
+  recipeIngredients RecipeIngredient[]   @relation(onDelete: Cascade)
+  modifications     RecipeModification[] @relation(onDelete: Cascade)
   users             User[]               @relation("UserRecipes")
   ingredients       Ingredient[]         @relation("RecipeIngredients")
   recipeUsers       UserRecipe[]         @relation("UserRecipeRecipe")

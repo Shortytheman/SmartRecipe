@@ -176,8 +176,9 @@ class MySQLService {
   }
 
   async deleteRecipe(id) {
-    return await this.prisma.recipe.delete({
-      where: { id },
+    return await this.prisma.recipe.update({
+        where: { id },
+        data: { deletedAt: new Date() }
     });
   }
 

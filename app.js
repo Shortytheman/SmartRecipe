@@ -322,17 +322,25 @@ app.delete('/:dbType/:model/:id', validateDbType, async (req, res) => {
             if (!mongoose.Types.ObjectId.isValid(id)) {
                 return res.status(400).json({ error: 'Invalid ID format. ID must be a valid ObjectId.' });
             }
-            result = await req.dbService[`delete${capitalize(model)}`](new mongoose.Types.ObjectId(id));
+            // Soft delete for MongoDB
+            result = await req.dbService[`update${capitalize(model)}`](
+                new mongoose.Types.ObjectId(id), 
+                { deletedAt: new Date() }
+            );
         } else {
             const numericId = parseInt(id, 10);
             if (isNaN(numericId)) {
                 return res.status(400).json({ error: 'Invalid ID format. ID must be a number.' });
             }
-            result = await req.dbService[`delete${capitalize(model)}`](numericId);
+            // Soft delete for MySQL
+            result = await req.dbService[`update${capitalize(model)}`](
+                numericId, 
+                { deletedAt: new Date() }
+            );
         }
 
         if (result) {
-            console.log(`${capitalize(model)} deleted`);
+            console.log(`${capitalize(model)} soft deleted`);
             res.status(204).send();
         } else {
             console.log(`${capitalize(model)} not found`);
