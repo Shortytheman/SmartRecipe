@@ -6,36 +6,12 @@ import { MongoService } from "./mongoDB/mongoService.js";
 import cors from 'cors';
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
 import mongoose from "mongoose";
 import express from "express";
 const app = express();
 
-app.use('/docs', express.static(join(__dirname, 'node_modules/swagger-ui-dist')));
-app.use('/docs', swaggerUi.serve);
-app.use('/docs', swaggerUi.serve, swaggerUi.setup(specs, swaggerOptions));
-
-app.get('/docs.json', (req, res) => {
-  res.setHeader('Content-Type', 'application/json');
-  res.send(specs);
-});
-
-process.on('unhandledRejection', (err) => {
-    console.error('Unhandled Rejection:', err);
-  });
-
-app.get('/', (req, res) => {
-    res.json({ status: 'ok', message: 'API is running' });
-});
-
-// Add error handling middleware at the bottom
-app.use((err, req, res, next) => {
-    console.error(err.stack);
-    res.status(500).json({ error: 'Something broke!' });
-});
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 app.use(cors({
     origin: '*',
@@ -43,6 +19,25 @@ app.use(cors({
     credentials: true
   }));
 app.use(express.json());
+
+app.use('/docs', express.static(join(__dirname, 'node_modules/swagger-ui-dist')));
+app.use('/docs', swaggerUi.serve);
+app.get('/docs.json', (req, res) => {
+    res.setHeader('Content-Type', 'application/json');
+    res.send(specs);
+  });
+app.use('/docs', swaggerUi.serve, swaggerUi.setup(specs, swaggerOptions));
+
+app.get('/', (req, res) => {
+    res.json({ status: 'ok', message: 'API is running' });
+});
+
+
+const services = {
+    mongodb: MongoService,
+    mysql: new MySQLService(),
+    //neo4j: new Neo4jService()
+};
 
 app.use((req, res, next) => {
     if (req.path.startsWith('/neo4j/') || 
@@ -53,11 +48,6 @@ app.use((req, res, next) => {
     next();
   });
 
-const services = {
-    mongodb: MongoService,
-    mysql: new MySQLService(),
-    //neo4j: new Neo4jService()
-};
 
 // Middleware to validate database type
 const validateDbType = (req, res, next) => {
@@ -389,6 +379,14 @@ app.get('/health', async (req, res) => {
     }
 });
 
+app.use((err, req, res, next) => {
+    console.error(err.stack);
+    res.status(500).json({ error: 'Something broke!' });
+});
+
+process.on('unhandledRejection', (err) => {
+    console.error('Unhandled Rejection:', err);
+  });
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
