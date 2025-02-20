@@ -70,35 +70,40 @@ const options = {
       },
       schemas: {
         Recipe: {
-          type: 'object',
-          required: ['name', 'prep', 'cook'],
-          properties: {
-            name: { 
-              type: 'string',
-              example: 'Spaghetti Carbonara'
-            },
-            prep: { 
-              type: 'object',
-              properties: {
-                time: { type: 'string', example: '15 minutes' },
-                steps: { 
-                  type: 'array',
-                  items: { type: 'string' },
-                  example: ['Dice bacon', 'Beat eggs']
+            type: 'object',
+            required: ['name', 'prep', 'cook', 'aiResponseId'],
+            properties: {
+              aiResponseId: {  
+                type: 'integer',
+                example: 1,
+                description: 'ID of the associated AI response'
+              },
+              name: { 
+                type: 'string',
+                example: 'Spaghetti Carbonara'
+              },
+              prep: { 
+                type: 'object',
+                properties: {
+                  time: { type: 'string', example: '15 minutes' },
+                  steps: { 
+                    type: 'array',
+                    items: { type: 'string' },
+                    example: ['Dice bacon', 'Beat eggs']
+                  }
                 }
-              }
-            },
-            cook: {
-              type: 'object',
-              properties: {
-                time: { type: 'string', example: '20 minutes' },
-                temperature: { type: 'string', example: 'medium-high' }
-              }
-            },
-            portionSize: { type: 'integer', example: 4 },
-            finalComment: { type: 'string', example: 'Serve immediately' }
-          }
-        },
+              },
+              cook: {
+                type: 'object',
+                properties: {
+                  time: { type: 'string', example: '20 minutes' },
+                  temperature: { type: 'string', example: 'medium-high' }
+                }
+              },
+              portionSize: { type: 'integer', example: 4 },
+              finalComment: { type: 'string', example: 'Serve immediately' }
+            }
+          },
         User: {
           type: 'object',
           required: ['name', 'email'],
