@@ -51,7 +51,7 @@ const options = {
         Recipe: {
           type: 'object',
           properties: {
-            id: { type: 'string' },
+            id: { type: 'number' },
             title: { type: 'string' },
             description: { type: 'string' },
             ingredients: { 
@@ -67,7 +67,7 @@ const options = {
         User: {
           type: 'object',
           properties: {
-            id: { type: 'string' },
+            id: { type: 'number' },
             name: { type: 'string' },
             email: { type: 'string' }
           }
@@ -75,7 +75,7 @@ const options = {
         Ingredient: {
           type: 'object',
           properties: {
-            id: { type: 'string' },
+            id: { type: 'number' },
             name: { type: 'string' },
             quantity: { type: 'string' }
           }
