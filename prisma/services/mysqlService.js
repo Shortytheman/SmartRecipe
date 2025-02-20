@@ -7,7 +7,7 @@ class MySQLService {
 
   async getAll(model) {
     const modelName = model.charAt(0).toUpperCase() + model.slice(1); // Capitalize model name
-    const methodName = `get${modelName}s`; // Construct the pluralized method name
+    const methodName = `get${modelName}`; // Construct the pluralized method name
 
     if (typeof this[methodName] !== 'function') {
       throw new Error(`Method ${methodName} not found for model ${model}`);
