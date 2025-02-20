@@ -137,3 +137,7 @@ railway run npm run seed:mongo
 # APP URL
 
 humble-transformation-production.up.railway.app
+
+# Swagger URL
+
+https://humble-transformation-production.up.railway.app/docs/

@@ -282,10 +282,15 @@ app.put('/:dbType/:model/:id', validateDbType, async (req, res) => {
     const { dbType, model, id } = req.params;
     console.log(`Calling method: update${capitalize(model)}`);
     console.log(`Database type: ${dbType}\nModel: ${model}\nID: ${id}`);
-
     try {
         if (dbType === 'mongodb' && !mongoose.Types.ObjectId.isValid(id)) {
             return res.status(400).json({ error: 'Invalid ID format. ID must be a valid ObjectId.' });
+        } else {
+            const numericId = parseInt(id, 10);
+            if (isNaN(numericId)) {
+                return res.status(400).json({ error: 'Invalid ID format. ID must be a number.' });
+            }
+            result = await req.dbService[`get${capitalize(model)}`](numericId);
         }
 
         const result = await req.dbService[`update${capitalize(model)}`](id, req.body);
@@ -305,6 +310,12 @@ app.delete('/:dbType/:model/:id', validateDbType, async (req, res) => {
     try {
         if (dbType === 'mongodb' && !mongoose.Types.ObjectId.isValid(id)) {
             return res.status(400).json({ error: 'Invalid ID format. ID must be a valid ObjectId.' });
+        } else {
+            const numericId = parseInt(id, 10);
+            if (isNaN(numericId)) {
+                return res.status(400).json({ error: 'Invalid ID format. ID must be a number.' });
+            }
+            result = await req.dbService[`get${capitalize(model)}`](numericId);
         }
 
         await req.dbService[`delete${capitalize(model)}`](id);
