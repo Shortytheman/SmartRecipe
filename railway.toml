@@ -1,7 +1,6 @@
 [build]
-builder = "DOCKERFILE"
-dockerfilePath = "./Dockerfile"
+builder = "NIXPACKS"
 
 [deploy]
-startCommand = "docker compose up"
+startCommand = "npm start"
 restartPolicyType = "ON_FAILURE"
