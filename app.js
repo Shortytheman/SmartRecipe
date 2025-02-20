@@ -211,7 +211,7 @@ app.post('/:dbType/:model', validateDbType, async (req, res) => {
     const data = req.body;
     console.log(`Calling method: create${capitalize(model)}`);
     console.log(`Database type: ${dbType}\nModel: ${model}`);
-
+    
     try {
         let result;
         switch (dbType) {

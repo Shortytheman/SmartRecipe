@@ -34,14 +34,14 @@ const options = {
           schema: {
             type: 'string',
             enum: [
-              'recipes',
-              'users',
-              'ingredients',
-              'instructions',
-              'userRecipes',
-              'recipeIngredients',
-              'userPrompts',
-              'aiResponses'
+              'recipe',
+              'user',
+              'ingredient',
+              'instruction',
+              'userRecipe',
+              'recipeIngredient',
+              'userPrompt',
+              'aiResponse'
             ]
           },
           description: 'Model to query'
