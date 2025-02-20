@@ -3,12 +3,27 @@ import "dotenv/config";
 import { MySQLService } from "./prisma/services/mysqlService.js";
 import { Neo4jService } from "./neo4j/neo4jservice.js";
 import { MongoService } from "./mongoDB/mongoService.js";
+import cors from 'cors';
 
 import mongoose from "mongoose";
 import express from "express";
 const app = express();
 
+app.use(cors({
+    origin: '*',
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    credentials: true
+  }));
 app.use(express.json());
+
+app.use((req, res, next) => {
+    if (req.path.startsWith('/neo4j/') || 
+        req.path.startsWith('/mongodb/') || 
+        req.path.startsWith('/mysql/')) {
+      return next();
+    }
+    next();
+  });
 
 const services = {
     mongodb: MongoService,
