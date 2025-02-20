@@ -29,7 +29,6 @@ const specs = swaggerJsdoc(options);
 const swaggerOptions = {
     explorer: true,
     swaggerOptions: {
-      url: 'https://humble-transformation-production.up.railway.app/docs.json',
       persistAuthorization: true
     }
   };
