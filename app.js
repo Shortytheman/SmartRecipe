@@ -1,5 +1,5 @@
 import "dotenv/config";
-
+import { specs, swaggerUi } from './swagger/swagger.js';
 import { MySQLService } from "./prisma/services/mysqlService.js";
 //import { Neo4jService } from "./neo4j/neo4jservice.js";
 import { MongoService } from "./mongoDB/mongoService.js";
