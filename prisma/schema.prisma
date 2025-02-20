@@ -10,7 +10,7 @@ generator client {
 
 datasource db {
   provider = "mysql"
-  url      = env("DATABASE_URL")
+  url      = "mysql://root:password@localhost:3306/smartrecipe"
 }
 
 model User {
@@ -29,7 +29,7 @@ model User {
 
   @@map("users")
 }
- 
+
 model UserPrompt {
   id            Int                  @id @default(autoincrement())
   userId        Int
@@ -71,9 +71,9 @@ model Recipe {
   updatedAt         DateTime             @updatedAt
   deletedAt         DateTime?
   aiResponse        AIResponse           @relation(fields: [aiResponseId], references: [id])
-  instructions      Instruction[]        @relation(onDelete: Cascade)
-  recipeIngredients RecipeIngredient[]   @relation(onDelete: Cascade)
-  modifications     RecipeModification[] @relation(onDelete: Cascade)
+  instructions      Instruction[]
+  recipeIngredients RecipeIngredient[]
+  modifications     RecipeModification[]
   users             User[]               @relation("UserRecipes")
   ingredients       Ingredient[]         @relation("RecipeIngredients")
   recipeUsers       UserRecipe[]         @relation("UserRecipeRecipe")
