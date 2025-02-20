@@ -9,6 +9,10 @@ import mongoose from "mongoose";
 import express from "express";
 const app = express();
 
+process.on('unhandledRejection', (err) => {
+    console.error('Unhandled Rejection:', err);
+  });
+
 app.use(cors({
     origin: '*',
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
@@ -182,6 +186,6 @@ app.delete('/:dbType/:model/:id', validateDbType, async (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
+app.listen(PORT,'0.0.0.0', () => {
     console.log(`Server running on port ${PORT}`);
 });

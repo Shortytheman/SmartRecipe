@@ -32,10 +32,11 @@ services:
       MYSQL_ROOT_PASSWORD: password
       MYSQL_DATABASE: smartrecipe
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-ppassword"]
-      interval: 5s
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
       timeout: 5s
-      retries: 10
+      retries: 5
+      start_period: 30s
     volumes:
       - mysql_data:/var/lib/mysql
 
