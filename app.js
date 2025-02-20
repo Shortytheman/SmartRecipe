@@ -51,7 +51,7 @@ app.use('/docs', swaggerUi.serve, swaggerUi.setup(specs, swaggerOptions));
  *                   - $ref: '#/components/schemas/Ingredient'
  *       400:
  *         description: Invalid database type
- *   post:
+*   post:
  *     summary: Create new item in specified database
  *     tags: [Dynamic Routes]
  *     parameters:
@@ -66,6 +66,8 @@ app.use('/docs', swaggerUi.serve, swaggerUi.setup(specs, swaggerOptions));
  *               - $ref: '#/components/schemas/Recipe'
  *               - $ref: '#/components/schemas/User'
  *               - $ref: '#/components/schemas/Ingredient'
+ *               - $ref: '#/components/schemas/Instruction'
+ *               - $ref: '#/components/schemas/RecipeIngredient'
  *     responses:
  *       200:
  *         description: Created item
@@ -111,11 +113,24 @@ app.use('/docs', swaggerUi.serve, swaggerUi.setup(specs, swaggerOptions));
  *               - $ref: '#/components/schemas/Recipe'
  *               - $ref: '#/components/schemas/User'
  *               - $ref: '#/components/schemas/Ingredient'
+ *               - $ref: '#/components/schemas/Instruction'
+ *               - $ref: '#/components/schemas/RecipeIngredient'
  *     responses:
  *       200:
  *         description: Updated item
+ *         content:
+ *           application/json:
+ *             schema:
+ *               oneOf:
+ *                 - $ref: '#/components/schemas/Recipe'
+ *                 - $ref: '#/components/schemas/User'
+ *                 - $ref: '#/components/schemas/Ingredient'
+ *                 - $ref: '#/components/schemas/Instruction'
+ *                 - $ref: '#/components/schemas/RecipeIngredient'
  *       404:
  *         description: Item not found
+ *       400:
+ *         description: Invalid request
  *   delete:
  *     summary: Delete item by ID
  *     tags: [Dynamic Routes]

@@ -71,49 +71,105 @@ const options = {
       schemas: {
         Recipe: {
           type: 'object',
+          required: ['name', 'prep', 'cook'],
           properties: {
-            id: { 
-              oneOf: [
-                { type: 'integer' },
-                { type: 'string' }
-              ]
+            name: { 
+              type: 'string',
+              example: 'Spaghetti Carbonara'
             },
-            title: { type: 'string' },
-            description: { type: 'string' },
-            ingredients: { 
-              type: 'array',
-              items: { type: 'string' }
+            prep: { 
+              type: 'object',
+              properties: {
+                time: { type: 'string', example: '15 minutes' },
+                steps: { 
+                  type: 'array',
+                  items: { type: 'string' },
+                  example: ['Dice bacon', 'Beat eggs']
+                }
+              }
             },
-            instructions: {
-              type: 'array',
-              items: { type: 'string' }
-            }
+            cook: {
+              type: 'object',
+              properties: {
+                time: { type: 'string', example: '20 minutes' },
+                temperature: { type: 'string', example: 'medium-high' }
+              }
+            },
+            portionSize: { type: 'integer', example: 4 },
+            finalComment: { type: 'string', example: 'Serve immediately' }
           }
         },
         User: {
           type: 'object',
+          required: ['name', 'email'],
           properties: {
-            id: { 
-              oneOf: [
-                { type: 'integer' },
-                { type: 'string' }
-              ]
+            name: { 
+              type: 'string',
+              example: 'John Doe'
             },
-            name: { type: 'string' },
-            email: { type: 'string' }
+            email: { 
+              type: 'string',
+              format: 'email',
+              example: 'john@example.com'
+            },
+            preferences: {
+              type: 'object',
+              properties: {
+                dietary: {
+                  type: 'array',
+                  items: { type: 'string' },
+                  example: ['vegetarian', 'gluten-free']
+                }
+              }
+            }
           }
         },
         Ingredient: {
           type: 'object',
+          required: ['name'],
           properties: {
-            id: { 
-              oneOf: [
-                { type: 'integer' },
-                { type: 'string' }
-              ]
+            name: { 
+              type: 'string',
+              example: 'Spaghetti'
             },
-            name: { type: 'string' },
-            quantity: { type: 'string' }
+            category: {
+              type: 'string',
+              example: 'pasta'
+            },
+            nutritionalInfo: {
+              type: 'object',
+              properties: {
+                calories: { type: 'number', example: 158 },
+                protein: { type: 'number', example: 6 }
+              }
+            }
+          }
+        },
+        Instruction: {
+          type: 'object',
+          required: ['recipeId', 'steps'],
+          properties: {
+            recipeId: { type: 'integer', example: 1 },
+            part: { type: 'integer', example: 1 },
+            steps: { 
+              type: 'object',
+              example: {
+                "1": "Boil water",
+                "2": "Add pasta",
+                "3": "Cook until al dente"
+              }
+            }
+          }
+        },
+        RecipeIngredient: {
+          type: 'object',
+          required: ['recipeId', 'ingredientId', 'value', 'unit'],
+          properties: {
+            recipeId: { type: 'integer', example: 1 },
+            ingredientId: { type: 'integer', example: 1 },
+            value: { type: 'number', example: 200 },
+            unit: { type: 'string', example: 'grams' },
+            comment: { type: 'string', example: 'al dente' }
           }
         }
       }
