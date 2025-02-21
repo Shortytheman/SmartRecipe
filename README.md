@@ -80,4 +80,4 @@ MongoDB Compass for MongoDB
 
 ## Link to hosted Projects Swagger
 
-`https://humble-transformation-production.up.railway.app/docs/`
+https://humble-transformation-production.up.railway.app/docs/
