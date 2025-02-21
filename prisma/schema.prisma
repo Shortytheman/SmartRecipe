@@ -162,3 +162,14 @@ model UserRecipe {
   @@id([userId, recipeId])
   @@map("userRecipes")
 }
+
+model RecipeAuditLog {
+  id            Int      @id @default(autoincrement())
+  recipeId      Int
+  action        String
+  changedData   Json
+  changedAt     DateTime @default(now())
+
+  @@index([recipeId])
+  @@map("recipeAuditLogs")
+}

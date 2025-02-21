@@ -107,6 +107,30 @@ async function setupDatabase() {
       SET NEW.updatedAt = NOW();
     `);
 
+        await connection.query(`
+          DROP TRIGGER IF EXISTS recipe_after_insert;
+        `);
+
+        await connection.query(`
+          CREATE TRIGGER recipe_after_insert 
+          AFTER INSERT ON recipes
+          FOR EACH ROW
+          BEGIN
+              INSERT INTO recipeAuditLogs (recipeId, action, changedData, changedAt)
+              VALUES (
+                  NEW.id, 
+                  'INSERT', 
+                  JSON_OBJECT(
+                      'name', NEW.name,
+                      'portionSize', NEW.portionSize,
+                      'aiResponseId', NEW.aiResponseId,
+                      'createdAt', NEW.createdAt
+                  ),
+                  NOW()
+              );
+          END
+        `);
+
         // Enable event scheduler
         await connection.query(`SET GLOBAL event_scheduler = ON;`);
 
