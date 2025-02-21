@@ -11,7 +11,16 @@ services:
       - MONGODB_URI=${MONGODB_URI}
       - DATABASE_URL=${DATABASE_URL}
     restart: always
-
+  test:
+    build: .
+    depends_on:
+      - mysql_db
+      - mongo_db
+    environment:
+      - DATABASE_URL=mysql://root:${MYSQL_ROOT_PASSWORD}@mysql_db:3306/${MYSQL_DATABASE}
+      - MONGODB_URI=mongodb://mongo_db:27017/test
+      - RUN_TESTS=true
+  # mysql_db:
   mysql_db:
     image: mysql:8.0
     environment:

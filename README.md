@@ -8,7 +8,9 @@ This project demonstrates a multi-database setup using SQL, MongoDB, and Neo4j f
 
 ### Run Setup Scripts
 
-# USIKKER PÅ OM MAN SKAL KØRE MIGRATE SCRIPTS PPÅ NY COMPUTER??
+`npm prisma:generate`
+
+`npm prisma:migrate`
 
 `npm run seed:mysql`
 
@@ -77,34 +79,6 @@ docker-compose down -v
 
 # Docker exec commands
 
-```
-# MySQL Commands
-docker-compose exec app curl http://localhost:3001/mysql/recipe
-docker-compose exec app curl http://localhost:3001/mysql/recipe/1
-docker-compose exec app curl http://localhost:3001/mysql/user
-docker-compose exec app curl http://localhost:3001/mysql/ingredient
-docker-compose exec app curl http://localhost:3001/mysql/instruction
-docker-compose exec app curl http://localhost:3001/mysql/recipeIngredient
-docker-compose exec app curl http://localhost:3001/mysql/recipeModification
-
-# MongoDB Commands
-docker-compose exec app curl http://localhost:3001/mongodb/recipe
-docker-compose exec app curl http://localhost:3001/mongodb/recipe/1
-docker-compose exec app curl http://localhost:3001/mongodb/user
-docker-compose exec app curl http://localhost:3001/mongodb/ingredient
-docker-compose exec app curl http://localhost:3001/mongodb/instruction
-docker-compose exec app curl http://localhost:3001/mongodb/recipeIngredient
-docker-compose exec app curl http://localhost:3001/mongodb/recipeModification
-
-# Neo4j Commands
-docker-compose exec app curl http://localhost:3001/neo4j/recipe
-docker-compose exec app curl http://localhost:3001/neo4j/recipe/1
-docker-compose exec app curl http://localhost:3001/neo4j/user
-docker-compose exec app curl http://localhost:3001/neo4j/ingredient
-docker-compose exec app curl http://localhost:3001/neo4j/instruction
-docker-compose exec app curl http://localhost:3001/neo4j/recipeIngredient
-docker-compose exec app curl http://localhost:3001/neo4j/recipeModification
-```
 
 # Install curl in the container
 docker-compose exec app apt-get update
