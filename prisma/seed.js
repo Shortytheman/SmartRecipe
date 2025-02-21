@@ -8,14 +8,13 @@ dotenv.config();
 
 const prisma = new PrismaClient();
 
-
-// Database setup configuration
+// Use DB_HOST from environment variables, defaulting to localhost if not set.
 const dbConfig = {
-    host: 'localhost',
+    host: process.env.DB_HOST || 'localhost',
     user: 'root',
-    password: 'password',
+    password: process.env.DB_PASSWORD || 'password',
     port: 3306,
-    multipleStatements: true
+    multipleStatements: true,
 };
 
 async function setupDatabase() {
@@ -35,36 +34,36 @@ async function setupDatabase() {
       USE smartrecipe;
       
       -- Drop existing users
-      DROP USER IF EXISTS 'admin'@'localhost';
-      DROP USER IF EXISTS 'read_only_user'@'localhost';
-      DROP USER IF EXISTS 'restricted_user'@'localhost';
-      DROP USER IF EXISTS 'app_user'@'localhost';
+      DROP USER IF EXISTS 'admin'@'${dbConfig.host}';
+      DROP USER IF EXISTS 'read_only_user'@'${dbConfig.host}';
+      DROP USER IF EXISTS 'restricted_user'@'${dbConfig.host}';
+      DROP USER IF EXISTS 'app_user'@'${dbConfig.host}';
       
       -- Create users
-      CREATE USER 'admin'@'localhost' IDENTIFIED BY 'admin_password';
-      CREATE USER 'read_only_user'@'localhost' IDENTIFIED BY 'read_only_password';
-      CREATE USER 'restricted_user'@'localhost' IDENTIFIED BY 'restricted_password';
-      CREATE USER 'app_user'@'localhost' IDENTIFIED BY 'app_user_password';
+      CREATE USER 'admin'@'${dbConfig.host}' IDENTIFIED BY 'admin_password';
+      CREATE USER 'read_only_user'@'${dbConfig.host}' IDENTIFIED BY 'read_only_password';
+      CREATE USER 'restricted_user'@'${dbConfig.host}' IDENTIFIED BY 'restricted_password';
+      CREATE USER 'app_user'@'${dbConfig.host}' IDENTIFIED BY 'app_user_password';
       
       -- Grant privileges
-      GRANT ALL PRIVILEGES ON smartrecipe.* TO 'admin'@'localhost';
-      GRANT SELECT ON smartrecipe.* TO 'read_only_user'@'localhost';
+      GRANT ALL PRIVILEGES ON smartrecipe.* TO 'admin'@'${dbConfig.host}';
+      GRANT SELECT ON smartrecipe.* TO 'read_only_user'@'${dbConfig.host}';
       
       -- App user privileges
-      GRANT SELECT, INSERT, UPDATE ON smartrecipe.users TO 'app_user'@'localhost';
-      GRANT SELECT, INSERT, UPDATE ON smartrecipe.userPrompts TO 'app_user'@'localhost';
-      GRANT SELECT, INSERT, UPDATE ON smartrecipe.aiResponses TO 'app_user'@'localhost';
-      GRANT SELECT, INSERT, UPDATE ON smartrecipe.ingredients TO 'app_user'@'localhost';
-      GRANT SELECT, INSERT, UPDATE ON smartrecipe.instructions TO 'app_user'@'localhost';
-      GRANT SELECT, INSERT, UPDATE ON smartrecipe.modificationResponses TO 'app_user'@'localhost';
-      GRANT SELECT, INSERT, UPDATE ON smartrecipe.recipeIngredients TO 'app_user'@'localhost';
-      GRANT SELECT, INSERT, UPDATE ON smartrecipe.recipeModifications TO 'app_user'@'localhost';
-      GRANT SELECT, INSERT, UPDATE ON smartrecipe.recipes TO 'app_user'@'localhost';
-      GRANT SELECT, INSERT, UPDATE ON smartrecipe.userRecipes TO 'app_user'@'localhost';
+      GRANT SELECT, INSERT, UPDATE ON smartrecipe.users TO 'app_user'@'${dbConfig.host}';
+      GRANT SELECT, INSERT, UPDATE ON smartrecipe.userPrompts TO 'app_user'@'${dbConfig.host}';
+      GRANT SELECT, INSERT, UPDATE ON smartrecipe.aiResponses TO 'app_user'@'${dbConfig.host}';
+      GRANT SELECT, INSERT, UPDATE ON smartrecipe.ingredients TO 'app_user'@'${dbConfig.host}';
+      GRANT SELECT, INSERT, UPDATE ON smartrecipe.instructions TO 'app_user'@'${dbConfig.host}';
+      GRANT SELECT, INSERT, UPDATE ON smartrecipe.modificationResponses TO 'app_user'@'${dbConfig.host}';
+      GRANT SELECT, INSERT, UPDATE ON smartrecipe.recipeIngredients TO 'app_user'@'${dbConfig.host}';
+      GRANT SELECT, INSERT, UPDATE ON smartrecipe.recipeModifications TO 'app_user'@'${dbConfig.host}';
+      GRANT SELECT, INSERT, UPDATE ON smartrecipe.recipes TO 'app_user'@'${dbConfig.host}';
+      GRANT SELECT, INSERT, UPDATE ON smartrecipe.userRecipes TO 'app_user'@'${dbConfig.host}';
       
       -- Restricted user privileges
-      GRANT SELECT ON smartrecipe.users TO 'restricted_user'@'localhost';
-      GRANT SELECT ON smartrecipe.userPrompts TO 'restricted_user'@'localhost';
+      GRANT SELECT ON smartrecipe.users TO 'restricted_user'@'${dbConfig.host}';
+      GRANT SELECT ON smartrecipe.userPrompts TO 'restricted_user'@'${dbConfig.host}';
       
       FLUSH PRIVILEGES;
     `);
@@ -72,10 +71,7 @@ async function setupDatabase() {
         console.log('Database and users created successfully');
 
         // Create function
-        await connection.query(`
-      DROP FUNCTION IF EXISTS total_time;
-    `);
-
+        await connection.query(`DROP FUNCTION IF EXISTS total_time;`);
         await connection.query(`
       CREATE FUNCTION total_time(prep INT, cook INT) 
       RETURNS INT
@@ -84,10 +80,7 @@ async function setupDatabase() {
     `);
 
         // Create procedure
-        await connection.query(`
-      DROP PROCEDURE IF EXISTS get_recipe_by_id;
-    `);
-
+        await connection.query(`DROP PROCEDURE IF EXISTS get_recipe_by_id;`);
         await connection.query(`
       CREATE PROCEDURE get_recipe_by_id(IN recipe_id INT)
       BEGIN
@@ -96,15 +89,33 @@ async function setupDatabase() {
     `);
 
         // Create trigger
-        await connection.query(`
-      DROP TRIGGER IF EXISTS before_recipe_update;
-    `);
-
+        await connection.query(`DROP TRIGGER IF EXISTS before_recipe_update;`);
         await connection.query(`
       CREATE TRIGGER before_recipe_update
       BEFORE UPDATE ON recipes
       FOR EACH ROW
       SET NEW.updatedAt = NOW();
+    `);
+
+        await connection.query(`DROP TRIGGER IF EXISTS recipe_after_insert;`);
+        await connection.query(`
+      CREATE TRIGGER recipe_after_insert 
+      AFTER INSERT ON recipes
+      FOR EACH ROW
+      BEGIN
+          INSERT INTO recipeAuditLogs (recipeId, action, changedData, changedAt)
+          VALUES (
+              NEW.id, 
+              'INSERT', 
+              JSON_OBJECT(
+                  'name', NEW.name,
+                  'portionSize', NEW.portionSize,
+                  'aiResponseId', NEW.aiResponseId,
+                  'createdAt', NEW.createdAt
+              ),
+              NOW()
+          );
+      END
     `);
 
         // Enable event scheduler
