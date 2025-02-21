@@ -77,3 +77,7 @@ NODE_ENV=development
 http://localhost:7474/browser/ for Neo4j
 
 MongoDB Compass for MongoDB
+
+## Link to hosted Projects Swagger
+
+`https://humble-transformation-production.up.railway.app/docs/`
