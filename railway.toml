@@ -7,3 +7,7 @@ restartPolicyType = "ON_FAILURE"
 
 [deploy.env]
 PORT = "3000"
+
+[test]
+command = "npm test"
+onFailure = "FAIL_DEPLOYMENT"
