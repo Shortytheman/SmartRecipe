@@ -10,6 +10,10 @@ This project demonstrates a multi-database setup using SQL, MongoDB, and Neo4j f
 
 # USIKKER PÅ OM MAN SKAL KØRE MIGRATE SCRIPTS PPÅ NY COMPUTER??
 
+`npm prisma:generate`
+
+`npm prisma:migrate`
+
 `npm run seed:mysql`
 
 `npm run seed:mongo`
