@@ -8,14 +8,23 @@ This project demonstrates a multi-database setup using SQL, MongoDB, and Neo4j f
 
 ## .env variables
 `DATABASE_URL="mysql://root:password@localhost:3306/smartrecipe"`
+
 `MONGODB_URI="mongodb://localhost:27017/smartrecipe"`
+
 `NEO4J_URI="bolt://localhost:7687"`
+
 `NEO4J_USER="neo4j"`
+
 `NEO4J_PASSWORD="password"`
+
 `DB_HOST=localhost`
+
 `DB_USERNAME=root`
+
 `DB_PASSWORD=password`
+
 `DB_PORT=3306`
+
 `DB_DATABASE=smartrecipe`
 
 ## Run Setup Scripts
