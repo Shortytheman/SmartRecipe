@@ -16,13 +16,26 @@ const driver = neo4j.driver(
     neo4j.auth.basic(NEO4J_USER, NEO4J_PASSWORD)
 );
 
-driver.verifyConnectivity()
-    .then(() => {
-        console.log('Connected to Neo4j successfully.');
-    })
-    .catch((error) => {
-        console.error('Error connecting to Neo4j:', error);
-        process.exit(1);
-    });
+const connectWithRetry = async () => {
+    const maxRetries = 5;
+    const retryDelay = 5000; // 5 seconds
 
-export { driver }; 
+    for (let i = 0; i < maxRetries; i++) {
+        try {
+            await driver.getServerInfo();
+            console.log('Connected to Neo4j successfully.');
+            return driver;
+        } catch (error) {
+            if (i === maxRetries - 1) {
+                console.error('Failed to connect to Neo4j after multiple attempts:', error);
+                process.exit(1);
+            }
+            console.log(`Neo4j connection attempt ${i + 1} failed. Retrying in ${retryDelay/1000} seconds...`);
+            await new Promise(resolve => setTimeout(resolve, retryDelay));
+        }
+    }
+};
+
+await connectWithRetry();
+
+export { driver };

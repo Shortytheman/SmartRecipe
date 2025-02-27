@@ -5,8 +5,10 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node index.js",
+    "start": "node app.js",
+    "test": "jest --detectOpenHandles",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
     "dev": "nodemon app.js",
     "docker:up": "docker compose up -d",
     "docker:down": "docker compose down",
@@ -15,7 +17,9 @@
     "seed:mongo": "node mongoDB/seed.js",
     "seed:neo4j": "node neo4j/neo4jSeeder.js",
     "seed:mysql": "node prisma/seed.js",
-    "seed:all": "node mongoDB/seed.js & node neo4j/neo4jSeeder.js & node prisma/seed.js"
+    "seed": "node prisma/seed.js && node neo4j/neo4jSeeder.js && node mongoDB/seed.js",
+    "seed:all": "node mongoDB/seed.js & node neo4j/neo4jSeeder.js & node prisma/seed.js",
+    "migrate": "prisma migrate deploy"
   },
   "keywords": [],
   "author": "",
@@ -30,10 +34,15 @@
     "mongoose": "^8.2.0",
     "mysql2": "^3.12.0",
     "neo4j-driver": "^5.27.0",
+    "prisma": "^6.3.1",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1",
     "uuid": "^11.0.5"
   },
   "devDependencies": {
     "nodemon": "^3.1.0",
-    "prisma": "^6.3.1"
+    "@babel/preset-env": "^7.x.x",
+    "jest": "^29.x.x",
+    "supertest": "^6.x.x"
   }
 }

@@ -9,21 +9,26 @@ if (!DATABASE_URL) {
     throw new Error('DATABASE_URL is not defined in the environment variables.');
 }
 
-const prisma = new PrismaClient({
-    datasources: {
-        db: {
-            url: DATABASE_URL,
-        },
-    },
-});
+const prisma = new PrismaClient();
 
-prisma.$connect()
-    .then(() => {
-        console.log('Connected to MySQL via Prisma successfully.');
-    })
-    .catch((error) => {
-        console.error('Error connecting to MySQL via Prisma:', error);
-        process.exit(1);
-    });
+const connectWithRetry = async () => {
+    const maxRetries = 5;
+    const retryDelay = 5000;
 
-export { prisma }; 
+    for (let i = 0; i < maxRetries; i++) {
+        try {
+            await prisma.$connect();
+            console.log('Connected to MySQL via Prisma successfully.');
+            return prisma;
+        } catch (error) {
+            console.log(`MySQL connection attempt ${i + 1} failed. Retrying in ${retryDelay/1000} seconds...`);
+            if (i === maxRetries - 1) {
+                console.error('Failed to connect to MySQL after multiple attempts:', error);
+                process.exit(1);
+            }
+            await new Promise(resolve => setTimeout(resolve, retryDelay));
+        }
+    }
+};
+
+export { prisma, connectWithRetry };

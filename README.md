@@ -8,7 +8,9 @@ This project demonstrates a multi-database setup using SQL, MongoDB, and Neo4j f
 
 ### Run Setup Scripts
 
-# USIKKER PÅ OM MAN SKAL KØRE MIGRATE SCRIPTS PPÅ NY COMPUTER??
+`npm prisma:generate`
+
+`npm prisma:migrate`
 
 `npm run seed:mysql`
 
@@ -26,16 +28,16 @@ return all recipes
 
 1. Install dependencies: `npm install`
 2. Start the server: `npm run dev`
-3. Access the API at `http://localhost:3000`
+3. Access the API at `http://localhost:3001`
 
 ## Example API Calls
 
 ### Get Recipe
-`http://localhost:3000/mongodb/recipe/:id`
+`http://localhost:3001/mongodb/recipe/:id`
 
-`http://localhost:3000/neo4j/recipe/:id`
+`http://localhost:3001/neo4j/recipe/:id`
 
-`http://localhost:3000/mysql/recipe/:id`
+`http://localhost:3001/mysql/recipe/:id`
 
 
 ## Visualizations
@@ -43,3 +45,73 @@ return all recipes
 http://localhost:7474/browser/ for Neo4j
 
 MongoDB Compass for MongoDB
+
+## Google cloud hosting commands
+
+# First clone the repository
+git clone https://github.com/Shortytheman/SmartRecipe.git
+cd SmartRecipe
+
+# Then checkout the specific branch
+git switch google-cloud
+
+# Build and start
+docker-compose up --build -d
+
+# Run seeders
+docker-compose exec app npm run seed
+
+# Stop the container
+docker-compose down
+
+# Start the container
+docker-compose up -d
+
+# Remove the container
+docker rmi smartrecipe_app
+
+# Show logs
+docker-compose logs app
+
+# Remove volumes
+docker-compose down -v
+
+
+# Docker exec commands
+
+
+# Install curl in the container
+docker-compose exec app apt-get update
+docker-compose exec app apt-get install -y curl
+
+
+# Railway commands
+
+# Connect to the Railway project
+railway link
+
+# Run migrations
+railway run npx prisma migrate deploy
+
+# Generate Prisma client
+railway run npx prisma generate
+
+# Deploy
+railway up
+
+# Pull
+railway pull
+
+
+# Run seeders
+railway run npm run seed:mysql
+railway run npm run seed:mongo
+
+
+# APP URL
+
+humble-transformation-production.up.railway.app
+
+# Swagger URL
+
+https://humble-transformation-production.up.railway.app/docs/

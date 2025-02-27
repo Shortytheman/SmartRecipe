@@ -10,7 +10,7 @@ generator client {
 
 datasource db {
   provider = "mysql"
-  url      = "mysql://root:password@localhost:3306/smartrecipe"
+  url      = env("DATABASE_URL")
 }
 
 model User {

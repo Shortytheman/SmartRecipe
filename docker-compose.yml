@@ -1,50 +1,36 @@
-version: '3.8'
-
+version: '3.3'
 services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - NEO4J_URI=${NEO4J_URI}
+      - NEO4J_USER=${NEO4J_USER}
+      - NEO4J_PASSWORD=${NEO4J_PASSWORD}
+      - MONGODB_URI=${MONGODB_URI}
+      - DATABASE_URL=${DATABASE_URL}
+    restart: always
+  test:
+    build: .
+    depends_on:
+      - mysql_db
+      - mongo_db
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - MONGODB_URI=${MONGODB_URI}/test
+      - RUN_TESTS=true
+  # mysql_db:
   mysql_db:
     image: mysql:8.0
-    container_name: mysql_db
-    restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: password
-      MYSQL_DATABASE: smartrecipe
-    ports:
-      - "3306:3306"
-    volumes:
-      - mysql_data:/var/lib/mysql
-    networks:
-      - app-network
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
 
   mongo_db:
     image: mongo:4.4
-    container_name: mongo_db
-    restart: always
-    ports:
-      - "27017:27017"
-    volumes:
-      - mongo_data:/data/db
-    networks:
-      - app-network
 
   neo4j_db:
     image: neo4j:4.3
-    container_name: neo4j_db
-    restart: always
     environment:
-      NEO4J_AUTH: neo4j/password
-    ports:
-      - "7474:7474"
-      - "7687:7687"
-    volumes:
-      - neo4j_data:/data
-    networks:
-      - app-network
-
-volumes:
-  mysql_data:
-  mongo_data:
-  neo4j_data:
-
-networks:
-  app-network:
-    driver: bridge 
+      NEO4J_AUTH: ${NEO4J_USER}/${NEO4J_PASSWORD}

@@ -2,15 +2,17 @@
 import mongoose from 'mongoose';
 import { faker } from '@faker-js/faker';
 import models from './mongoSchema.js';
+import dotenv from 'dotenv';
 
-const DATABASE_NAME = 'smartrecipe';
-const MONGODB_URI = `mongodb://localhost:27017/${DATABASE_NAME}`;
+dotenv.config();
+
+const MONGODB_URI = process.env.MONGODB_URI;
 
 const seedMongoDB = async () => {
     try {
         // Connect to MongoDB
         await mongoose.connect(MONGODB_URI);
-        console.log(`Connected to MongoDB - Database: ${DATABASE_NAME}`);
+        console.log(`Connected to MongoDB`);
 
         // Drop the database if it exists
         await mongoose.connection.dropDatabase();

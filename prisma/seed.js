@@ -8,6 +8,8 @@ dotenv.config();
 
 const prisma = new PrismaClient();
 
+
+// Database setup configuration
 // Use DB_HOST from environment variables, defaulting to localhost if not set.
 const dbConfig = {
     host: process.env.DB_HOST || 'localhost',
@@ -18,7 +20,7 @@ const dbConfig = {
 };
 
 async function setupDatabase() {
-    const connection = await mysql.createConnection(dbConfig);
+    const connection = await mysql.createConnection(process.env.DATABASE_URL);
 
     // Ensure we're using the correct database
     await connection.query('CREATE DATABASE IF NOT EXISTS smartrecipe');
@@ -71,22 +73,24 @@ async function setupDatabase() {
         console.log('Database and users created successfully');
 
         // Create function
-        await connection.query(`DROP FUNCTION IF EXISTS total_time;`);
         await connection.query(`
-      CREATE FUNCTION total_time(prep INT, cook INT) 
-      RETURNS INT
-      DETERMINISTIC
-      RETURN prep + cook;
-    `);
+            DROP FUNCTION IF EXISTS total_time;
+        `);
+        await connection.query(`
+            CREATE FUNCTION total_time(prep INT, cook INT) 
+            RETURNS INT
+            DETERMINISTIC
+            RETURN prep + cook;
+        `);
 
         // Create procedure
         await connection.query(`DROP PROCEDURE IF EXISTS get_recipe_by_id;`);
         await connection.query(`
-      CREATE PROCEDURE get_recipe_by_id(IN recipe_id INT)
-      BEGIN
-        SELECT * FROM recipes WHERE id = recipe_id;
-      END;
-    `);
+            CREATE PROCEDURE get_recipe_by_id(IN recipe_id INT)
+            BEGIN
+                SELECT * FROM recipes WHERE id = recipe_id;
+            END;
+        `);
 
         // Create trigger
         await connection.query(`DROP TRIGGER IF EXISTS before_recipe_update;`);
@@ -124,24 +128,24 @@ async function setupDatabase() {
         // Drop and recreate view
         await connection.query(`DROP VIEW IF EXISTS recipe_times;`);
         await connection.query(`
-      CREATE VIEW recipe_times AS
-      SELECT 
-        id, 
-        name, 
-        JSON_EXTRACT(prep, '$.value') + JSON_EXTRACT(cook, '$.value') AS total_recipe_time 
-      FROM recipes;
-    `);
+            CREATE VIEW recipe_times AS
+            SELECT 
+                id, 
+                name, 
+                JSON_EXTRACT(prep, '$.value') + JSON_EXTRACT(cook, '$.value') AS total_recipe_time 
+            FROM recipes;
+        `);
 
         // Drop and recreate event
         await connection.query(`DROP EVENT IF EXISTS delete_old_deleted_recipes;`);
         await connection.query(`
-      CREATE EVENT delete_old_deleted_recipes
-      ON SCHEDULE EVERY 1 DAY
-      DO
-        DELETE FROM recipes
-        WHERE deletedAt IS NOT NULL
-        AND deletedAt < NOW() - INTERVAL 1 YEAR;
-    `);
+            CREATE EVENT delete_old_deleted_recipes
+            ON SCHEDULE EVERY 1 DAY
+            DO
+                DELETE FROM recipes
+                WHERE deletedAt IS NOT NULL
+                AND deletedAt < NOW() - INTERVAL 1 YEAR;
+        `);
 
         console.log('Database functions, procedures, triggers, views, and events created successfully');
 
@@ -155,7 +159,12 @@ async function setupDatabase() {
 
 async function seed() {
     try {
+        // First let Prisma create tables
+        await prisma.$connect();
+
+        // Then set up additional database features
         await setupDatabase();
+
         console.log('Starting data seeding...');
 
         // Clean up existing data

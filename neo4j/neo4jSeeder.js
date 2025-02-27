@@ -5,7 +5,7 @@ import { fileURLToPath } from 'url';
 class Neo4jService {
     constructor() {
         this.driver = neo4j.driver(
-            'bolt://localhost:7687',
+            'bolt://neo4j_db:7687',
             neo4j.auth.basic('neo4j', 'password')
         );
     }
