@@ -72,10 +72,11 @@ const RecipeSchema = new mongoose.Schema({
     required: true,
     validate: [validateJSON, 'Invalid JSON format for cook']
   },
-  portionSize: { type: Number, required: true, min: 1 },
-  finalComment: { type: String, required: true },
+  portions: { type: Number, required: true, min: 1 },
+  final_comment: { type: String, required: true },
   instructions: [{
     part: { type: Number, required: true },
+    titel: { type: String },
     steps: {
       type: [String],
       required: true,
@@ -85,8 +86,8 @@ const RecipeSchema = new mongoose.Schema({
   }],
   ingredients: [{
     ingredientId: { type: mongoose.Schema.Types.ObjectId, ref: 'Ingredient', required: true },
-    value: { type: Number, required: true, min: 0 },
-    unit: { type: String, required: true },
+    value: { type: Number, min: 0 },
+    unit: { type: String },
     comment: { type: String },
     _id: false
   }],

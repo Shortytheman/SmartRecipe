@@ -42,6 +42,9 @@ export const MongoService = {
     if (!Model) {
       throw new Error(`Model ${modelName} not found`);
     }
+    if (modelName === "Recipe") {
+      return createRecipeWithIngredientsAndInstructions(data)
+    }
     return service.mongo.create(Model, data);
   },
 
@@ -70,7 +73,7 @@ export const MongoService = {
       throw new Error(`Model ${modelName} not found`);
     }
     return service.mongo.deleteById(Model, id)
-  }
+  },
   // // User operations
   // getUsers: () => service.mongo.read(User, {}),
   // createUser: (data) => service.mongo.create(User, data),
@@ -119,7 +122,72 @@ export const MongoService = {
   // getModificationResponse: (id) => service.mongo.readById(ModificationResponse, id),
   // updateModificationResponse: (id, data) => service.mongo.updateById(ModificationResponse, id, data),
   // deleteModificationResponse: (id) => service.mongo.deleteById(ModificationResponse, id)
-};
+}
+
+async function createRecipeWithIngredientsAndInstructions(recipeData) {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+  try {
+    const aiResponseExists = await AIResponse.findById(
+        recipeData.aiResponseId
+    ).session(session);
+
+    if (!aiResponseExists) {
+      throw new Error(`AIResponse with id ${recipeData.aiResponseId} does not exist.`);
+    }
+
+    const recipeIngredients = [];
+
+    for (const ingredient of recipeData.ingredients) {
+      let ingredientDoc = await Ingredient.findOne({ name: ingredient.name }).session(session);
+
+      if (!ingredientDoc) {
+        const newIngredient = await Ingredient.create([{ name: ingredient.name }], { session });
+        ingredientDoc = newIngredient[0];
+      }
+
+      recipeIngredients.push({
+        ingredientId: ingredientDoc._id,
+        value: ingredient.value,
+        unit: ingredient.unit,
+        comment: ingredient.comment || ''
+      });
+    }
+
+    const recipeToCreate = {
+      aiResponseId: recipeData.aiResponseId,
+      name: recipeData.name,
+      prep: recipeData.time.prep,
+      cook: recipeData.time.cook,
+      portions: recipeData.portions,
+      final_comment: recipeData.final_comment,
+      instructions: recipeData.instructions.map(instruction => ({
+        part: instruction.part,
+        titel: instruction.titel,
+        steps: instruction.steps
+      })),
+      ingredients: recipeIngredients
+    };
+
+    console.log('Creating recipe with data:', JSON.stringify(recipeToCreate, null, 2));
+
+    const recipe = await Recipe.create([recipeToCreate], { session });
+
+    await session.commitTransaction();
+    session.endSession();
+
+    const completeRecipe = await Recipe.findById(recipe[0]._id)
+        .populate('ingredients.ingredientId');
+
+    return completeRecipe;
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    console.error('Error creating recipe:', error);
+    throw error;
+  }
+}
+
 
 export const closeConnections = async () => {
   await mongoose.disconnect();
