@@ -13,6 +13,7 @@ class MySQLService {
       throw new Error(`Method ${methodName} not found for model ${model}`);
     }
 
+
     return this[methodName]();
   }
 
@@ -23,7 +24,7 @@ class MySQLService {
 
     console.log(modelName)
     console.log(methodName)
-    if (modelName === 'Recipes') {
+    if (modelName === 'Recipe') {
       return this.createRecipeWithIngredientsAndInstructions(data)
     }
 
@@ -157,50 +158,118 @@ class MySQLService {
   // CRUD Operations for Recipes
 
   async getRecipes() {
-    return await this.prisma.recipe.findMany();
+    const recipes = await this.prisma.recipe.findMany({
+      include: {
+        instructions: true,
+        ingredients: true,
+      },
+    });
+    console.log(JSON.stringify(recipes, null, 2)); // Log to inspect
+    return recipes;
   }
   async createRecipeWithIngredientsAndInstructions(recipeData) {
     return await prisma.$transaction(async (tx) => {
+      const aiResponseExists = await tx.aIResponse.findUnique({
+        where: { id: recipeData.aiResponseId }
+      });
+
+      if (!aiResponseExists) {
+        throw new Error(`AIResponse with id ${recipeData.aiResponseId} does not exist.`);
+      }
       const recipe = await tx.recipe.create({
         data: {
           aiResponseId: recipeData.aiResponseId,
           name: recipeData.name,
-          prep: recipeData.prep,
-          cook: recipeData.cook,
-          portionSize: recipeData.portionSize,
-          finalComment: recipeData.finalComment,
+          prep: recipeData.time.prep,
+          cook: recipeData.time.cook,
+          portionSize: recipeData.portions,
+          finalComment: recipeData.final_comment,
         }
-      })
+      });
+
       for (const ingredient of recipeData.ingredients) {
-        let existingIngredient = await tx.ingredient.findUnique({
-          where: { name: recipeData.ingredient.name }
-        })
-        if (!existingIngredient) {
-          existingIngredient = await tx.ingredient.create({
-            data: { name: recipeData.ingredient.name }
-          })
+        const name = ingredient.name;
+        const uniqueIngredient = await prisma.ingredient.findUnique( {where: { name }});
+        if(uniqueIngredient){
+          await tx.recipeIngredient.create({
+            data: {
+              value: ingredient.value,
+              unit: ingredient.unit,
+              comment: ingredient.comment,
+              recipe: {
+                connect: {
+                  id: recipe.id
+                }
+              },
+              ingredient: {
+                connect: {
+                  id: uniqueIngredient.id
+                }
+              }
+            }
+          });
+        }else {
+          const ingredientId = await prisma.ingredient.create({
+            data: {
+              name
+            },
+            select: {
+              id: true,
+            },
+          });
+          await tx.recipeIngredient.create({
+            data: {
+              value: ingredient.value,
+              unit: ingredient.unit,
+              comment: ingredient.comment,
+              recipe: {
+                connect: {
+                  id: recipe.id
+                }
+              },
+              ingredient: {
+                connect: {
+                  id: ingredientId.id
+                }
+              }
+            }
+          });
         }
-        await tx.recipeIngredient.create({
-          data: {
-            recipeId: recipe.id,
-            ingredientId: existingIngredient.id,
-            value: ingredient.value,
-            unit: ingredient.unit,
-            comment: ingredient.comment
-          }
-        })
       }
+
       for (const instruction of recipeData.instructions) {
+        const { part, steps } = instruction;
         await tx.instruction.create({
           data: {
             recipeId: recipe.id,
-            part: instruction.part,
-            steps: instruction.steps
+            part: part,
+            steps: steps,
           }
-        })
+        });
       }
-      return recipe
-    })
+
+      await tx.recipe.findUnique({
+        where: { id: recipe.id },
+        include: {
+          instructions: true,
+          recipeIngredients: {
+            include: {
+              ingredient: true,
+            },
+          },
+        },
+      });
+      const savedRecipe = await tx.recipe.findUnique({
+        where: { id: recipe.id },
+        include: {
+          instructions: true,
+          recipeIngredients: {
+            include: { ingredient: true },
+          },
+        },
+      });
+      return savedRecipe;
+    });
   }
 
   async getRecipe(id) {

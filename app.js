@@ -280,6 +280,7 @@ app.get('/:dbType/:model/:id', validateDbType, async (req, res) => {
 
 app.put('/:dbType/:model/:id', validateDbType, async (req, res) => {
     const { dbType, model, id } = req.params;
+    const data = req.body
     console.log(`Calling method: update${capitalize(model)}`);
     console.log(`Database type: ${dbType}\nModel: ${model}\nID: ${id}`);
 
