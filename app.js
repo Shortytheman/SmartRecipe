@@ -161,7 +161,7 @@ const services = {
 const validateDbType = (req, res, next) => {
     const dbType = req.params.dbType.toLowerCase();
     if (!['mongodb', 'mysql', 'neo4j'].includes(dbType)) {
-        return res.status(400).json({ error: 'Invalid database type. Use mongodb or mysql' });
+        return res.status(400).json({ error: 'Invalid database type. Use mongodb, mysql or neo4j' });
     }
     req.dbService = services[dbType];
     req.dbType = dbType;
@@ -221,12 +221,12 @@ app.post('/:dbType/:model', validateDbType, async (req, res) => {
                 res.status(200).json(result);
                 break;
             case "mongodb":
-                result = await services.mongodb.getAll(model)
+                result = await services.mongodb.createModel(model, data)
                 console.log(result)
                 res.status(200).json(result)
                 break;
             case "neo4j":
-                result = await services.neo4j.getAll(model)
+                result = await services.neo4j.createModel(model, data)
                 console.log(result)
                 res.status(200).json(result)
                 break;

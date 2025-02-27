@@ -1,163 +1,13 @@
 import { faker } from '@faker-js/faker';
-import neo4j from 'neo4j-driver';
 import { fileURLToPath } from 'url';
-import dotenv from "dotenv";
-dotenv.config()
+import { Neo4jService } from './neo4jservice.js';
 
-
-const NEO4J_URI = process.env.NEO4J_URI;
-const NEO4J_USER = process.env.NEO4J_USER;
-const NEO4J_PASSWORD = process.env.NEO4J_PASSWORD;
-
-if (!NEO4J_URI || !NEO4J_USER || !NEO4J_PASSWORD) {
-    throw new Error('Neo4j connection details are not fully defined in the environment variables.');
-}
-
-
-class Neo4jService {
-    constructor() {
-        this.driver = neo4j.driver(
-            NEO4J_URI,
-            neo4j.auth.basic(NEO4J_USER, NEO4J_PASSWORD)
-        );
-    }
-
-    async query(cypher, params = {}) {
-        const session = this.driver.session();
-        try {
-            return await session.run(cypher, params);
-        } finally {
-            await session.close();
-        }
-    }
-
-    async clearDatabase() {
-        console.log('Clearing existing database data...');
-
-        // Drop all constraints
-        try {
-            const constraints = await this.query('SHOW CONSTRAINTS');
-            for (const constraint of constraints.records) {
-                await this.query(`DROP CONSTRAINT ${constraint.get('name')}`);
-            }
-            console.log('Dropped existing constraints');
-        } catch (error) {
-            console.log('No existing constraints to drop');
-        }
-
-        // Drop all indexes
-        try {
-            const indexes = await this.query('SHOW INDEXES');
-            for (const index of indexes.records) {
-                if (index.get('type') !== 'LOOKUP') { // Don't drop internal indexes
-                    await this.query(`DROP INDEX ${index.get('name')}`);
-                }
-            }
-            console.log('Dropped existing indexes');
-        } catch (error) {
-            console.log('No existing indexes to drop');
-        }
-
-        // Delete all nodes and relationships
-        await this.query('MATCH (n) DETACH DELETE n');
-        console.log('Deleted all nodes and relationships');
-
-        // Verify database is empty
-        const result = await this.query('MATCH (n) RETURN count(n) as count');
-        const count = result.records[0].get('count').toNumber();
-
-        if (count === 0) {
-            console.log('Database cleared successfully');
-        } else {
-            throw new Error(`Database not properly cleared. ${count} nodes remaining.`);
-        }
-    }
-
-    async createConstraints() {
-        const constraints = [
-            'CREATE CONSTRAINT unique_user_email IF NOT EXISTS FOR (u:User) REQUIRE u.email IS UNIQUE',
-            'CREATE CONSTRAINT unique_ingredient_name IF NOT EXISTS FOR (i:Ingredient) REQUIRE i.name IS UNIQUE',
-            'CREATE CONSTRAINT unique_recipe_id IF NOT EXISTS FOR (r:Recipe) REQUIRE r.id IS UNIQUE',
-            'CREATE CONSTRAINT unique_user_prompt_id IF NOT EXISTS FOR (up:UserPrompt) REQUIRE up.id IS UNIQUE',
-            'CREATE CONSTRAINT unique_ai_response_id IF NOT EXISTS FOR (ar:AIResponse) REQUIRE ar.id IS UNIQUE',
-            'CREATE CONSTRAINT unique_instruction_id IF NOT EXISTS FOR (ins:Instruction) REQUIRE ins.id IS UNIQUE',
-            'CREATE CONSTRAINT unique_recipe_modification_id IF NOT EXISTS FOR (rm:RecipeModification) REQUIRE rm.id IS UNIQUE',
-            'CREATE CONSTRAINT unique_modification_response_id IF NOT EXISTS FOR (mr:ModificationResponse) REQUIRE mr.id IS UNIQUE'
-        ];
-
-        for (const constraint of constraints) {
-            try {
-                await this.query(constraint);
-                console.log(`Created constraint: ${constraint}`);
-            } catch (error) {
-                console.error(`Error creating constraint: ${constraint}`, error);
-                throw error;
-            }
-        }
-    }
-
-    async createIndexes() {
-        const indexes = [
-            'CREATE INDEX recipe_name_idx IF NOT EXISTS FOR (r:Recipe) ON (r.name)',
-            'CREATE INDEX recipe_created_idx IF NOT EXISTS FOR (r:Recipe) ON (r.createdAt)',
-            'CREATE INDEX user_oauth_idx IF NOT EXISTS FOR (u:User) ON (u.oauthId)',
-            'CREATE INDEX ingredient_category_idx IF NOT EXISTS FOR (i:Ingredient) ON (i.category)',
-            'CREATE INDEX user_prompt_created_idx IF NOT EXISTS FOR (up:UserPrompt) ON (up.createdAt)',
-            'CREATE INDEX ai_response_created_idx IF NOT EXISTS FOR (ar:AIResponse) ON (ar.createdAt)'
-        ];
-
-        for (const index of indexes) {
-            try {
-                await this.query(index);
-                console.log(`Created index: ${index}`);
-            } catch (error) {
-                console.error(`Error creating index: ${index}`, error);
-                throw error;
-            }
-        }
-    }
-
-    async createNode(label, properties) {
-        // Convert any non-primitive properties to strings
-        const processedProps = Object.entries(properties).reduce((acc, [key, value]) => {
-            acc[key] = (typeof value === 'object' && value !== null)
-                ? JSON.stringify(value)
-                : value;
-            return acc;
-        }, {});
-
-        const result = await this.query(
-            `CREATE (n:${label} $props) RETURN n`,
-            { props: { ...processedProps, id: faker.string.uuid(), createdAt: new Date().toISOString() } }
-        );
-        return result.records[0].get('n');
-    }
-
-    async createRelationship(from, to, type, properties = {}) {
-        const result = await this.query(
-            `
-      MATCH (a), (b)
-      WHERE id(a) = $fromId AND id(b) = $toId
-      CREATE (a)-[r:${type} $props]->(b)
-      RETURN r
-      `,
-            {
-                fromId: from.identity,
-                toId: to.identity,
-                props: properties
-            }
-        );
-        return result.records[0].get('r');
-    }
-}
 
 async function seedDatabase() {
     const neo4jService = new Neo4jService();
 
     try {
         console.log('Starting database seeding...');
-
-        // Clear existing data and set up constraints/indexes
         await neo4jService.clearDatabase();
         await neo4jService.createConstraints();
         await neo4jService.createIndexes();
@@ -166,7 +16,7 @@ async function seedDatabase() {
         console.log('Creating users...');
         const users = await Promise.all([
             ...Array(5).fill().map(() =>
-                neo4jService.createNode('User', {
+                neo4jService.createModel('User', {
                     name: faker.person.fullName(),
                     email: faker.internet.email(),
                     password: faker.internet.password(),
@@ -175,7 +25,7 @@ async function seedDatabase() {
                 })
             ),
             // Add test user
-            neo4jService.createNode('User', {
+            neo4jService.createModel('User', {
                 name: 'Test User',
                 email: 'admin@admin.com',
                 password: 'admin123',
@@ -188,7 +38,7 @@ async function seedDatabase() {
         console.log('Creating ingredients...');
         const ingredients = await Promise.all([
             ...Array(10).fill().map(() =>
-                neo4jService.createNode('Ingredient', {
+                neo4jService.createModel('Ingredient', {
                     name: faker.commerce.productName().substring(0, 50),
                     category: faker.helpers.arrayElement(['Meat', 'Vegetable', 'Dairy', 'Grain', 'Spice']),
                     unit: faker.helpers.arrayElement(['grams', 'pieces', 'ml', 'tbsp', 'tsp'])
@@ -200,7 +50,8 @@ async function seedDatabase() {
         console.log('Creating user prompts...');
         const userPrompts = await Promise.all(
             users.map(user =>
-                neo4jService.createNode('UserPrompt', {
+                neo4jService.createModel('UserPrompt', {
+                    userId: user.id,
                     prompt: {
                         ingredients: [
                             faker.commerce.productName(),
@@ -220,7 +71,7 @@ async function seedDatabase() {
         console.log('Creating AI responses...');
         const aiResponses = await Promise.all(
             userPrompts.map(prompt =>
-                neo4jService.createNode('AIResponse', {
+                neo4jService.createModel('AIResponse', {
                     response: {
                         name: faker.commerce.productName(),
                         time: {
@@ -237,19 +88,26 @@ async function seedDatabase() {
         // Create Recipes
         console.log('Creating recipes...');
         const recipes = await Promise.all(
-            aiResponses.map(response =>
-                neo4jService.createNode('Recipe', {
+            aiResponses.map(response => 
+                neo4jService.createModel('Recipe', {
+                    aiResponseId: response.id,
                     name: faker.commerce.productName(),
-                    prep: {
-                        value: faker.number.int({ min: 5, max: 30 }),
-                        unit: "minutes"
-                    },
-                    cook: {
-                        value: faker.number.int({ min: 5, max: 30 }),
-                        unit: "minutes"
-                    },
-                    portionSize: faker.number.int({ min: 2, max: 8 }),
-                    finalComment: faker.lorem.sentence()
+                    prepTime: faker.number.int({ min: 5, max: 30 }),
+                    prepUnit: 'minutes',
+                    cookTime: faker.number.int({ min: 5, max: 30 }),
+                    cookUnit: 'minutes',
+                    portions: faker.number.int({ min: 2, max: 8 }),
+                    final_comment: faker.lorem.sentence(),
+                    ingredients: ingredients.slice(0, 3).map(ing => ({
+                        name: ing.name,
+                        value: faker.number.int({ min: 1, max: 100 }),
+                        unit: faker.helpers.arrayElement(['grams', 'pieces', 'ml']),
+                        comment: faker.lorem.sentence()
+                    })),
+                    instructions: Array(3).fill().map((_, index) => ({
+                        part: index + 1,
+                        steps: faker.lorem.paragraph()
+                    }))
                 })
             )
         );
@@ -259,7 +117,7 @@ async function seedDatabase() {
         const instructions = await Promise.all(
             recipes.flatMap(recipe =>
                 Array(3).fill().map((_, index) =>
-                    neo4jService.createNode('Instruction', {
+                    neo4jService.createModel('Instruction', {
                         part: index + 1,
                         steps: {
                             text: faker.lorem.sentence()
@@ -273,7 +131,7 @@ async function seedDatabase() {
         console.log('Creating recipe modifications...');
         const modifications = await Promise.all(
             recipes.map(recipe =>
-                neo4jService.createNode('RecipeModification', {
+                neo4jService.createModel('RecipeModification', {
                     isActive: faker.datatype.boolean()
                 })
             )
@@ -283,49 +141,28 @@ async function seedDatabase() {
         console.log('Creating modification responses...');
         const modificationResponses = await Promise.all(
             modifications.map(mod =>
-                neo4jService.createNode('ModificationResponse', {
+                neo4jService.createModel('ModificationResponse', {
                     appliedToRecipe: faker.datatype.boolean()
                 })
             )
         );
 
         // Create Relationships
-        console.log('Creating relationships...');
+        console.log('Creating user-recipe chains...');
         for (let i = 0; i < users.length; i++) {
-            // User writes UserPrompt
             await neo4jService.createRelationship(users[i], userPrompts[i], 'WRITES');
-
-            // UserPrompt has AIResponse
             await neo4jService.createRelationship(userPrompts[i], aiResponses[i], 'HAS_RESPONSE');
-
-            // AIResponse generates Recipe
-            await neo4jService.createRelationship(aiResponses[i], recipes[i], 'GENERATES');
-
-            // Recipe has Instructions
-            const recipeInstructions = instructions.slice(i * 3, (i + 1) * 3);
-            for (const instruction of recipeInstructions) {
-                await neo4jService.createRelationship(recipes[i], instruction, 'HAS_INSTRUCTION');
-            }
-
-            // Recipe contains Ingredients
-            const recipeIngredients = faker.helpers.arrayElements(ingredients, 5);
-            for (const ingredient of recipeIngredients) {
-                await neo4jService.createRelationship(recipes[i], ingredient, 'CONTAINS', {
-                    value: faker.number.int({ min: 1, max: 100 }),
-                    unit: faker.helpers.arrayElement(['grams', 'pieces', 'ml', 'tbsp', 'tsp'])
-                });
-            }
-
-            // Recipe has Modification
-            await neo4jService.createRelationship(recipes[i], modifications[i], 'HAS_MODIFICATION');
-
-            // Modification has Response
-            await neo4jService.createRelationship(modifications[i], modificationResponses[i], 'HAS_RESPONSE');
-
-            // User saves Recipe
+            
             await neo4jService.createRelationship(users[i], recipes[i], 'SAVES', {
                 createdAt: new Date().toISOString()
             });
+        }
+
+        // Create Recipe -> Modification -> ModificationResponse chains
+        console.log('Creating modification chains...');
+        for (let i = 0; i < recipes.length; i++) {
+            await neo4jService.createRelationship(recipes[i], modifications[i], 'HAS_MODIFICATION');
+            await neo4jService.createRelationship(modifications[i], modificationResponses[i], 'HAS_RESPONSE');
         }
 
         console.log('Database seeding completed successfully');
