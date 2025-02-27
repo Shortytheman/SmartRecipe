@@ -1,12 +1,25 @@
 import { faker } from '@faker-js/faker';
 import neo4j from 'neo4j-driver';
 import { fileURLToPath } from 'url';
+import dotenv from "dotenv";
+dotenv.config()
+
+
+const NEO4J_URI = process.env.NEO4J_URI;
+const NEO4J_USER = process.env.NEO4J_USER;
+const NEO4J_PASSWORD = process.env.NEO4J_PASSWORD;
+
+if (!NEO4J_URI || !NEO4J_USER || !NEO4J_PASSWORD) {
+    throw new Error('Neo4j connection details are not fully defined in the environment variables.');
+}
+
 
 class Neo4jService {
+
     constructor() {
         this.driver = neo4j.driver(
-            'bolt://neo4j_db:7687',
-            neo4j.auth.basic('neo4j', 'password')
+            NEO4J_URI,
+            neo4j.auth.basic(NEO4J_USER, NEO4J_PASSWORD)
         );
     }
 
@@ -63,14 +76,14 @@ class Neo4jService {
 
     async createConstraints() {
         const constraints = [
-            'CREATE CONSTRAINT unique_user_email IF NOT EXISTS ON (u:User) ASSERT u.email IS UNIQUE',
-            'CREATE CONSTRAINT unique_ingredient_name IF NOT EXISTS ON (i:Ingredient) ASSERT i.name IS UNIQUE',
-            'CREATE CONSTRAINT unique_recipe_id IF NOT EXISTS ON (r:Recipe) ASSERT r.id IS UNIQUE',
-            'CREATE CONSTRAINT unique_user_prompt_id IF NOT EXISTS ON (up:UserPrompt) ASSERT up.id IS UNIQUE',
-            'CREATE CONSTRAINT unique_ai_response_id IF NOT EXISTS ON (ar:AIResponse) ASSERT ar.id IS UNIQUE',
-            'CREATE CONSTRAINT unique_instruction_id IF NOT EXISTS ON (ins:Instruction) ASSERT ins.id IS UNIQUE',
-            'CREATE CONSTRAINT unique_recipe_modification_id IF NOT EXISTS ON (rm:RecipeModification) ASSERT rm.id IS UNIQUE',
-            'CREATE CONSTRAINT unique_modification_response_id IF NOT EXISTS ON (mr:ModificationResponse) ASSERT mr.id IS UNIQUE'
+            'CREATE CONSTRAINT unique_user_email IF NOT EXISTS FOR (u:User) REQUIRE u.email IS UNIQUE',
+            'CREATE CONSTRAINT unique_ingredient_name IF NOT EXISTS FOR (i:Ingredient) REQUIRE i.name IS UNIQUE',
+            'CREATE CONSTRAINT unique_recipe_id IF NOT EXISTS FOR (r:Recipe) REQUIRE r.id IS UNIQUE',
+            'CREATE CONSTRAINT unique_user_prompt_id IF NOT EXISTS FOR (up:UserPrompt) REQUIRE up.id IS UNIQUE',
+            'CREATE CONSTRAINT unique_ai_response_id IF NOT EXISTS FOR (ar:AIResponse) REQUIRE ar.id IS UNIQUE',
+            'CREATE CONSTRAINT unique_instruction_id IF NOT EXISTS FOR (ins:Instruction) REQUIRE ins.id IS UNIQUE',
+            'CREATE CONSTRAINT unique_recipe_modification_id IF NOT EXISTS FOR (rm:RecipeModification) REQUIRE rm.id IS UNIQUE',
+            'CREATE CONSTRAINT unique_modification_response_id IF NOT EXISTS FOR (mr:ModificationResponse) REQUIRE mr.id IS UNIQUE'
         ];
 
         for (const constraint of constraints) {

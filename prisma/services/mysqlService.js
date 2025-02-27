@@ -209,7 +209,7 @@ class MySQLService {
             }
           });
         }else {
-          const ingredientId = await prisma.ingredient.create({
+          const ingredientId = await tx.ingredient.create({
             data: {
               name
             },
