@@ -160,7 +160,7 @@ const services = {
 
 const validateDbType = (req, res, next) => {
     const dbType = req.params.dbType.toLowerCase();
-    if (!['mongodb', 'mysql'].includes(dbType)) {
+    if (!['mongodb', 'mysql', 'neo4j'].includes(dbType)) {
         return res.status(400).json({ error: 'Invalid database type. Use mongodb or mysql' });
     }
     req.dbService = services[dbType];
