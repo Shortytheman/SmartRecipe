@@ -1,0 +1,1 @@
+{"indexes":[{"v":{"$numberInt":"2"},"key":{"_id":{"$numberInt":"1"}},"name":"_id_"},{"v":{"$numberInt":"2"},"unique":true,"key":{"userPromptId":{"$numberInt":"1"}},"name":"userPromptId_1","background":true}],"uuid":"3f3c328efe8d42aa952450da83f62a0a","collectionName":"airesponses","type":"collection"}
