@@ -15,7 +15,6 @@ if (!NEO4J_URI || !NEO4J_USER || !NEO4J_PASSWORD) {
 
 
 class Neo4jService {
-
     constructor() {
         this.driver = neo4j.driver(
             NEO4J_URI,

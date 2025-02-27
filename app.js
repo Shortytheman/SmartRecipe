@@ -1,7 +1,7 @@
 import "dotenv/config";
 import { specs, swaggerUi, swaggerOptions } from "./swagger.js";
 import { MySQLService } from "./prisma/services/mysqlService.js";
-//import { Neo4jService } from "./neo4j/neo4jservice.js";
+import { Neo4jService } from "./neo4j/neo4jservice.js";
 import { MongoService } from "./mongoDB/mongoService.js";
 import cors from 'cors';
 import { dirname, join } from 'path';
@@ -155,12 +155,12 @@ app.use('/docs', swaggerUi.serve, swaggerUi.setup(specs, swaggerOptions));
 const services = {
     mongodb: MongoService,
     mysql: new MySQLService(),
-    //neo4j: new Neo4jService()
+    neo4j: new Neo4jService()
 };
 
 const validateDbType = (req, res, next) => {
     const dbType = req.params.dbType.toLowerCase();
-    if (!['mongodb', 'mysql'].includes(dbType)) {
+    if (!['mongodb', 'mysql', 'neo4j'].includes(dbType)) {
         return res.status(400).json({ error: 'Invalid database type. Use mongodb or mysql' });
     }
     req.dbService = services[dbType];
@@ -190,11 +190,11 @@ app.get('/:dbType/:model', validateDbType, async (req, res) => {
                 console.log(result)
                 res.status(200).json(result)
                 break;
-//            case "neo4j":
-//                result = await services.neo4j.getAll(model)
-//                console.log(result)
-//                res.status(200).json(result)
-//                break;
+            case "neo4j":
+                result = await services.neo4j.getAll(model)
+                console.log(result)
+                res.status(200).json(result)
+                break;
             default:
                 console.log("Wrong db format: ", dbType)
                 res.status(400).send("Wrong db format", dbType)
@@ -225,11 +225,11 @@ app.post('/:dbType/:model', validateDbType, async (req, res) => {
                 console.log(result)
                 res.status(200).json(result)
                 break;
-//            case "neo4j":
-//                result = await services.neo4j.getAll(model)
-//                console.log(result)
-//                res.status(200).json(result)
-//                break;
+            case "neo4j":
+                result = await services.neo4j.getAll(model)
+                console.log(result)
+                res.status(200).json(result)
+                break;
             default:
                 console.log("Wrong db format: ", dbType)
                 res.status(400).send("Wrong db format", dbType)
@@ -254,8 +254,8 @@ app.get('/:dbType/:model/:id', validateDbType, async (req, res) => {
                 return res.status(400).json({ error: 'Invalid ID format. ID must be a valid ObjectId.' });
             }
             result = await req.dbService[`get${capitalize(model)}`](new mongoose.Types.ObjectId(id));
-//        } else if (dbType === 'neo4j') {
-//            result = await req.dbService[`get${capitalize(model)}`](id);
+        } else if (dbType === 'neo4j') {
+            result = await req.dbService[`get${capitalize(model)}`](id);
         } else {
             const numericId = parseInt(id, 10);
             if (isNaN(numericId)) {

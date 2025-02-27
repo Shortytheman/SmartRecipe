@@ -11,7 +11,7 @@ const options = {
     },
     servers: [
       {
-        url: 'https://humble-transformation-production.up.railway.app',
+        url: 'http://localhost:3000',
         description: 'Production server',
       }
     ],
@@ -23,7 +23,7 @@ const options = {
           required: true,
           schema: {
             type: 'string',
-            enum: ['mysql', 'mongodb']
+            enum: ['mysql', 'mongodb', 'neo4j']
           },
           description: 'Database type to query'
         },
