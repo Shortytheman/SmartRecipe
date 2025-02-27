@@ -83,6 +83,22 @@ Neo4j: Neo4j Aura
 
 http://localhost:7474/browser/ for Neo4j
 
+(Recipe put body:
+
+´´´{
+  "aiResponseId": x,
+  "name": "xxx",
+  "prepTime": xx,
+  "prepUnit": "xx",
+  "cookTime": x,
+  "cookUnit": "xx",
+  "portionSize": x,
+  "finalComment": "xxx",
+  "temperature": "xx"
+}´´´
+
+)
+
 MongoDB Compass for MongoDB
 
 ## Link to hosted Projects Swagger

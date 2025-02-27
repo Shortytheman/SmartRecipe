@@ -22,6 +22,39 @@ class Neo4jService {
     return this[methodName](data);
   }
 
+    async getModel(model, id) {
+      const modelName = model.charAt(0).toUpperCase() + model.slice(1);
+      const methodName = `get${modelName}`;
+
+      if (typeof this[methodName] !== 'function') {
+          throw new Error(`Method ${methodName} not found for model ${model}`);
+      }
+
+      return this[methodName](id);
+  }
+
+  async updateModel(model, id, data) {
+      const modelName = model.charAt(0).toUpperCase() + model.slice(1);
+      const methodName = `update${modelName}`;
+
+      if (typeof this[methodName] !== 'function') {
+          throw new Error(`Method ${methodName} not found for model ${model}`);
+      }
+
+      return this[methodName](id, data);
+  }
+
+  async deleteModel(model, id) {
+      const modelName = model.charAt(0).toUpperCase() + model.slice(1);
+      const methodName = `delete${modelName}`;
+
+      if (typeof this[methodName] !== 'function') {
+          throw new Error(`Method ${methodName} not found for model ${model}`);
+      }
+
+      return this[methodName](id);
+  }
+
   async query(cypher, params = {}) {
     const session = this.driver.session();
     try {
@@ -380,11 +413,29 @@ async createIndexes() {
 
   async updateRecipe(id, properties) {
     const result = await this.query(
-      `MATCH (r:Recipe {id: $id}) SET r += $props RETURN r`,
-      { id, props: properties }
+        `
+        MATCH (r:Recipe {id: $id})
+        SET r += $props,
+            r.updatedAt = datetime().epochMillis
+        RETURN r
+        `,
+        {
+            id,
+            props: properties
+        }
     );
-    return result.records[0].get('r').properties;
-  }
+
+    if (!result.records[0]) {
+        throw new Error(`Recipe with id ${id} not found`);
+    }
+
+    const recipe = result.records[0].get('r').properties;
+    return {
+      ...recipe,
+      createdAt: recipe.createdAt.toNumber(),
+      updatedAt: recipe.updatedAt.toNumber()
+  };
+}
 
   async deleteRecipe(id) {
     await this.query(
