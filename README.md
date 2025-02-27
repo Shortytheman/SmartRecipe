@@ -7,11 +7,11 @@ This project demonstrates a multi-database setup using SQL, MongoDB, and Neo4j f
 # Setup
 
 ## .env variables
-`DATABASE_URL="mysql://root:password@localhost:3306/smartrecipe"`
+`DATABASE_URL="mysql://root:AQywPyVwLpApBTKoCXBSEboQMFCCKUvb@metro.proxy.rlwy.net:26265/railway"`
 
-`MONGODB_URI="mongodb://localhost:27017/smartrecipe"`
+`MONGODB_URI="mongodb+srv://cloezfulgaming:LOPjYDpekGX9AFKX@cluster0.brzqx.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"`
 
-`NEO4J_URI="bolt://localhost:7687"`
+`NEO4J_URI="neo4j+s://3f313837.databases.neo4j.io"`
 
 `NEO4J_USER="neo4j"`
 
@@ -55,6 +55,13 @@ https://github.com/Shortytheman/SmartRecipe/blob/main/prisma/seed.js
 ## Server config
 PORT=3000
 NODE_ENV=development
+
+## Hosted Databases
+MongoDB: MongoDB Atlas
+
+MySQL: Railway
+
+Neo4j: Neo4j Aura
 
 ## Running the Application
 

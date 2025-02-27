@@ -43,6 +43,33 @@ export const MongoService = {
       throw new Error(`Model ${modelName} not found`);
     }
     return service.mongo.create(Model, data);
+  },
+
+  async getModel(model, id){
+    const modelName = model.charAt(0).toUpperCase() + model.slice(1);
+    const Model = models[modelName];
+    if (!Model) {
+      throw new Error(`Model ${modelName} not found`);
+    }
+    return service.mongo.readById(Model, id);
+  },
+
+  async updateModel(model, id, data){
+    const modelName = model.charAt(0).toUpperCase() + model.slice(1);
+    const Model = models[modelName];
+    if (!Model) {
+      throw new Error(`Model ${modelName} not found`);
+    }
+    return service.mongo.updateById(Model, id, data)
+  },
+
+  async deleteModel(model, id){
+    const modelName = model.charAt(0).toUpperCase() + model.slice(1);
+    const Model = models[modelName];
+    if (!Model) {
+      throw new Error(`Model ${modelName} not found`);
+    }
+    return service.mongo.deleteById(Model, id)
   }
   // // User operations
   // getUsers: () => service.mongo.read(User, {}),
