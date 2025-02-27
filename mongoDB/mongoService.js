@@ -55,6 +55,7 @@ export const MongoService = {
       throw new Error(`Model ${modelName} not found`);
     }
     return service.mongo.readById(Model, id);
+
   },
 
   async updateModel(model, id, data){

@@ -84,6 +84,7 @@ const RecipeSchema = new mongoose.Schema({
     },
     _id: false
   }],
+
   ingredients: [{
     ingredientId: { type: mongoose.Schema.Types.ObjectId, ref: 'Ingredient', required: true },
     value: { type: Number, min: 0 },

@@ -221,6 +221,7 @@ app.post('/:dbType/:model', validateDbType, async (req, res) => {
                 res.status(200).json(result);
                 break;
             case "mongodb":
+
                 result = await services.mongodb.createModel(model, data)
                 console.log(result)
                 res.status(200).json(result)
