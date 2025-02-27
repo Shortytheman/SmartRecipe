@@ -11,6 +11,50 @@ class Neo4jService {
     await this.createIndexes();
   }
 
+  async createModel(model, data) {
+    const modelName = model.charAt(0).toUpperCase() + model.slice(1);
+    const methodName = `create${modelName}`;
+
+    if (typeof this[methodName] !== 'function') {
+      throw new Error(`Method ${methodName} not found for model ${model}`);
+    }
+
+    return this[methodName](data);
+  }
+
+    async getModel(model, id) {
+      const modelName = model.charAt(0).toUpperCase() + model.slice(1);
+      const methodName = `get${modelName}`;
+
+      if (typeof this[methodName] !== 'function') {
+          throw new Error(`Method ${methodName} not found for model ${model}`);
+      }
+
+      return this[methodName](id);
+  }
+
+  async updateModel(model, id, data) {
+      const modelName = model.charAt(0).toUpperCase() + model.slice(1);
+      const methodName = `update${modelName}`;
+
+      if (typeof this[methodName] !== 'function') {
+          throw new Error(`Method ${methodName} not found for model ${model}`);
+      }
+
+      return this[methodName](id, data);
+  }
+
+  async deleteModel(model, id) {
+      const modelName = model.charAt(0).toUpperCase() + model.slice(1);
+      const methodName = `delete${modelName}`;
+
+      if (typeof this[methodName] !== 'function') {
+          throw new Error(`Method ${methodName} not found for model ${model}`);
+      }
+
+      return this[methodName](id);
+  }
+
   async query(cypher, params = {}) {
     const session = this.driver.session();
     try {
@@ -22,102 +66,216 @@ class Neo4jService {
 
   async createConstraints() {
     const constraints = [
-      'CREATE CONSTRAINT IF NOT EXISTS FOR (u:User) REQUIRE u.email IS UNIQUE',
-      'CREATE CONSTRAINT IF NOT EXISTS FOR (i:Ingredient) REQUIRE i.name IS UNIQUE',
-      'CREATE CONSTRAINT IF NOT EXISTS FOR (r:Recipe) REQUIRE r.id IS UNIQUE',
-      'CREATE CONSTRAINT IF NOT EXISTS FOR (up:UserPrompt) REQUIRE up.id IS UNIQUE',
-      'CREATE CONSTRAINT IF NOT EXISTS FOR (ar:AIResponse) REQUIRE ar.id IS UNIQUE'
-    ];
+      'CREATE CONSTRAINT IF NOT EXISTS ON (u:User) ASSERT u.email IS UNIQUE',
+      'CREATE CONSTRAINT IF NOT EXISTS ON (i:Ingredient) ASSERT i.name IS UNIQUE',
+      'CREATE CONSTRAINT IF NOT EXISTS ON (r:Recipe) ASSERT r.id IS UNIQUE',
+      'CREATE CONSTRAINT IF NOT EXISTS ON (up:UserPrompt) ASSERT up.id IS UNIQUE',
+      'CREATE CONSTRAINT IF NOT EXISTS ON (ar:AIResponse) ASSERT ar.id IS UNIQUE',
+      'CREATE CONSTRAINT IF NOT EXISTS ON (ins:Instruction) ASSERT ins.id IS UNIQUE',
+      'CREATE CONSTRAINT IF NOT EXISTS ON (rm:RecipeModification) ASSERT rm.id IS UNIQUE',
+      'CREATE CONSTRAINT IF NOT EXISTS ON (mr:ModificationResponse) ASSERT mr.id IS UNIQUE'
+  ];
 
     for (const constraint of constraints) {
-      await this.query(constraint);
+        try {
+            await this.query(constraint);
+            console.log(`Created constraint: ${constraint}`);
+        } catch (error) {
+            console.error(`Error creating constraint: ${constraint}`, error);
+            throw error;
+        }
     }
+}
+
+async createIndexes() {
+  const indexes = [
+      'CREATE INDEX recipe_name_idx IF NOT EXISTS FOR (r:Recipe) ON (r.name)',
+      'CREATE INDEX recipe_created_idx IF NOT EXISTS FOR (r:Recipe) ON (r.createdAt)',
+      'CREATE INDEX user_oauth_idx IF NOT EXISTS FOR (u:User) ON (u.oauthId)',
+      'CREATE INDEX ingredient_category_idx IF NOT EXISTS FOR (i:Ingredient) ON (i.category)',
+      'CREATE INDEX user_prompt_created_idx IF NOT EXISTS FOR (up:UserPrompt) ON (up.createdAt)',
+      'CREATE INDEX ai_response_created_idx IF NOT EXISTS FOR (ar:AIResponse) ON (ar.createdAt)'
+  ];
+
+  for (const index of indexes) {
+      try {
+          await this.query(index);
+          console.log(`Created index: ${index}`);
+      } catch (error) {
+          console.error(`Error creating index: ${index}`, error);
+          throw error;
+      }
+  }
+}
+
+  async clearDatabase() {
+    console.log('Clearing existing database data...');
+
+    try {
+        const constraints = await this.query('SHOW CONSTRAINTS');
+        for (const constraint of constraints.records) {
+            await this.query(`DROP CONSTRAINT ${constraint.get('name')}`);
+        }
+        console.log('Dropped existing constraints');
+    } catch (error) {
+        console.log('No existing constraints to drop');
+    }
+
+    try {
+        const indexes = await this.query('SHOW INDEXES');
+        for (const index of indexes.records) {
+            if (index.get('type') !== 'LOOKUP') { // Don't drop internal indexes
+                await this.query(`DROP INDEX ${index.get('name')}`);
+            }
+        }
+        console.log('Dropped existing indexes');
+    } catch (error) {
+        console.log('No existing indexes to drop');
+    }
+
+    // Delete all nodes and relationships
+    await this.query('MATCH (n) DETACH DELETE n');
+    console.log('Deleted all nodes and relationships');
+
+    // Verify database is empty
+    const result = await this.query('MATCH (n) RETURN count(n) as count');
+    const count = result.records[0].get('count').toNumber();
+
+    if (count === 0) {
+        console.log('Database cleared successfully');
+    } else {
+        throw new Error(`Database not properly cleared. ${count} nodes remaining.`);
+    }
+}
+
+  _stringifyComplexProps(data) {
+    const processed = { ...data };
+    for (const [key, value] of Object.entries(processed)) {
+      if (typeof value === 'object' && value !== null) {
+        processed[key] = JSON.stringify(value);
+      }
+    }
+    return processed;
   }
 
-  async createIndexes() {
-    const indexes = [
-      'CREATE INDEX IF NOT EXISTS FOR (r:Recipe) ON (r.name)',
-      'CREATE INDEX IF NOT EXISTS FOR (r:Recipe) ON (r.createdAt)',
-      'CREATE INDEX IF NOT EXISTS FOR (u:User) ON (u.oauthId)',
-      'CREATE INDEX IF NOT EXISTS FOR (i:Ingredient) ON (i.category)'
-    ];
-
-    for (const index of indexes) {
-      await this.query(index);
+  _parseComplexProps(data) {
+    const processed = { ...data };
+    for (const [key, value] of Object.entries(processed)) {
+      try {
+        processed[key] = JSON.parse(value);
+      } catch (e) {
+        // If it's not JSON parseable, keep original value
+        continue;
+      }
     }
+    return processed;
+  }
+
+
+  _processNode(properties) {
+    const processed = { ...properties };
+    if (processed.createdAt) processed.createdAt = processed.createdAt.toNumber();
+    if (processed.updatedAt) processed.updatedAt = processed.updatedAt.toNumber();
+    return this._parseComplexProps(processed);
   }
 
   async getAll(model) {
     const label = model.charAt(0).toUpperCase() + model.slice(1);
     const result = await this.query(`MATCH (n:${label}) RETURN n`);
-    return result.records.map(record => record.get('n').properties);
+    return result.records.map(record => this._processNode(record.get('n').properties));
   }
 
-  // Node operations
   async createNode(label, properties) {
-    const timestamp = Date.now();
+    const randomSuffix = Math.random().toString(36).substring(2, 15);
+    const id = `${label.toLowerCase()}_${Date.now()}_${randomSuffix}`;
+    const processedProps = this._stringifyComplexProps(properties);
+    
+    const result = await this.query(
+      `
+      CREATE (n:${label})
+      SET n += $props,
+          n.id = $id,
+          n.createdAt = datetime().epochMillis,
+          n.updatedAt = datetime().epochMillis
+      RETURN n
+      `,
+      {
+        props: processedProps,
+        id: id
+      }
+    );
+    return this._processNode(result.records[0].get('n').properties);
+  }
+
+  async getNode(label, id) {
     const result = await this.query(
         `
-            CREATE (n:${label} $props)
-            RETURN n
-            `,
-        {
-          props: {
-            ...properties,
-            id: `${label.toLowerCase()}_${timestamp}`,
-            createdAt: timestamp,
-            updatedAt: timestamp
-          }
-        }
+        MATCH (n:${label} {id: $id})
+        RETURN n
+        `,
+        { id }
     );
-    return result.records[0].get('n').properties;
+    return result.records[0] ? this._processNode(result.records[0].get('n').properties) : null;
   }
 
   async updateNode(label, id, properties) {
-    const result = await this.query(
-        `
-            MATCH (n:${label} {id: $id})
-            SET n += $props, n.updatedAt = $timestamp
-            RETURN n
-            `,
-        {
-          id,
-          props: properties,
-          timestamp: Date.now()
-        }
-    );
-    return result.records[0].get('n').properties;
+      const processedProps = this._stringifyComplexProps(properties);
+      const result = await this.query(
+          `
+          MATCH (n:${label} {id: $id})
+          SET n += $props,
+              n.updatedAt = datetime().epochMillis
+          RETURN n
+          `,
+          { id, props: processedProps }
+      );
+      
+      if (!result.records[0]) {
+          throw new Error(`${label} with id ${id} not found`);
+      }
+      
+      return this._processNode(result.records[0].get('n').properties);
   }
 
   async deleteNode(label, id) {
+    console.log(`Attempting to delete ${label} with id: ${id}`);
+    
+
+    const node = await this.getNode(label, id);
+    
+    if (!node) {
+        throw new Error(`${label} with id ${id} not found`);
+    }
+
     await this.query(
-        `
-            MATCH (n:${label} {id: $id})
-            DETACH DELETE n
-            `,
+        `MATCH (n:${label} {id: $id}) DETACH DELETE n`,
         { id }
     );
+    
+    return node;
   }
 
   // Relationship operations
-  async createRelationship(fromNode, relationType, toNode, properties = {}) {
+  async createRelationship(fromNode, toNode, relationType, properties = {}) {
     const result = await this.query(
         `
-            MATCH (from {id: $fromId}), (to {id: $toId})
-            CREATE (from)-[r:${relationType} $props]->(to)
-            RETURN r
-            `,
+        MATCH (from) WHERE from.id = $fromId
+        MATCH (to) WHERE to.id = $toId
+        CREATE (from)-[r:${relationType} $props]->(to)
+        RETURN r
+        `,
         {
-          fromId: fromNode.id,
-          toId: toNode.id,
-          props: {
-            ...properties,
-            createdAt: Date.now()
-          }
+            fromId: fromNode.id,
+            toId: toNode.id,
+            props: {
+                ...properties,
+                createdAt: Date.now()
+            }
         }
     );
-    return result.records[0].get('r').properties;
-  }
+    return result.records[0].get('r');
+}
+
 
   // Common queries
   async getRecipeWithIngredients(recipeId) {
@@ -155,326 +313,419 @@ class Neo4jService {
   }
 
   // CRUD Operations for Users
-  async createUser(properties) {
-    const result = await this.query(
-      `CREATE (u:User $props) RETURN u`,
-      { props: properties }
-    );
-    return result.records[0].get('u').properties;
+  async createUser(data) {
+    return this.createNode('User', data);
   }
 
   async getUser(id) {
-    const result = await this.query(
-      `MATCH (u:User {id: $id}) RETURN u`,
-      { id }
-    );
-    return result.records[0]?.get('u').properties;
+    return this.getNode('User', id);
   }
 
   async updateUser(id, properties) {
-    const result = await this.query(
-      `MATCH (u:User {id: $id}) SET u += $props RETURN u`,
-      { id, props: properties }
-    );
-    return result.records[0].get('u').properties;
+    return this.updateNode('User', id, properties);
   }
 
   async deleteUser(id) {
-    await this.query(
-      `MATCH (u:User {id: $id}) DETACH DELETE u`,
-      { id }
-    );
+    return this.deleteNode('User', id);
   }
 
   // CRUD Operations for Ingredients
-  async createIngredient(properties) {
-    const result = await this.query(
-      `CREATE (i:Ingredient $props) RETURN i`,
-      { props: properties }
-    );
-    return result.records[0].get('i').properties;
+  async createIngredient(data) {
+    return this.createNode('Ingredient', data);
   }
 
   async getIngredient(id) {
-    const result = await this.query(
-      `MATCH (i:Ingredient {id: $id}) RETURN i`,
-      { id }
-    );
-    return result.records[0]?.get('i').properties;
+    return this.getNode('Ingredient', id);
   }
 
-  async updateIngredient(id, properties) {
-    const result = await this.query(
-      `MATCH (i:Ingredient {id: $id}) SET i += $props RETURN i`,
-      { id, props: properties }
-    );
-    return result.records[0].get('i').properties;
+  async updateIngredient(id, data) {
+    return this.updateNode('Ingredient', id, data);
   }
 
   async deleteIngredient(id) {
-    await this.query(
-      `MATCH (i:Ingredient {id: $id}) DETACH DELETE i`,
-      { id }
-    );
+    return this.deleteNode('Ingredient', id);
   }
 
   // CRUD Operations for UserPrompts
-  async createUserPrompt(properties) {
-    const result = await this.query(
-      `CREATE (up:UserPrompt $props) RETURN up`,
-      { props: properties }
-    );
-    return result.records[0].get('up').properties;
+  async createUserPrompt(data) {
+    return this.createNode('UserPrompt', data);
   }
 
   async getUserPrompt(id) {
-    const result = await this.query(
-      `MATCH (up:UserPrompt {id: $id}) RETURN up`,
-      { id }
-    );
-    return result.records[0]?.get('up').properties;
+    return this.getNode('UserPrompt', id);
   }
 
   async updateUserPrompt(id, properties) {
-    const result = await this.query(
-      `MATCH (up:UserPrompt {id: $id}) SET up += $props RETURN up`,
-      { id, props: properties }
-    );
-    return result.records[0].get('up').properties;
+    return this.updateNode('UserPrompt', id, properties);
   }
 
   async deleteUserPrompt(id) {
-    await this.query(
-      `MATCH (up:UserPrompt {id: $id}) DETACH DELETE up`,
-      { id }
-    );
+    return this.deleteNode('UserPrompt', id);
   }
 
   // CRUD Operations for AIResponses
-  async createAIResponse(properties) {
-    const result = await this.query(
-      `CREATE (ar:AIResponse $props) RETURN ar`,
-      { props: properties }
-    );
-    return result.records[0].get('ar').properties;
+  async createAIResponse(data) {
+    return this.createNode('AIResponse', data);
   }
 
   async getAIResponse(id) {
-    const result = await this.query(
-      `MATCH (ar:AIResponse {id: $id}) RETURN ar`,
-      { id }
-    );
-    return result.records[0]?.get('ar').properties;
+    return this.getNode('AIResponse', id);
   }
 
   async updateAIResponse(id, properties) {
-    const result = await this.query(
-      `MATCH (ar:AIResponse {id: $id}) SET ar += $props RETURN ar`,
-      { id, props: properties }
-    );
-    return result.records[0].get('ar').properties;
+    return this.updateNode('AIResponse', id, properties);
   }
 
   async deleteAIResponse(id) {
-    await this.query(
-      `MATCH (ar:AIResponse {id: $id}) DETACH DELETE ar`,
-      { id }
-    );
+    return this.deleteNode('AIResponse', id);
   }
 
-  // CRUD Operations for Recipes
-  async createRecipe(properties) {
-    const result = await this.query(
-      `CREATE (r:Recipe $props) RETURN r`,
-      { props: properties }
-    );
-    return result.records[0].get('r').properties;
+  async createRecipe(data) {
+    return this.createRecipeWithIngredientsAndInstructions(data);
   }
 
   async getRecipe(id) {
     const result = await this.query(
-      `MATCH (r:Recipe {id: $id}) RETURN r`,
-      { id }
+        `
+        MATCH (r:Recipe {id: $id})
+        OPTIONAL MATCH (r)-[rel:CONTAINS]->(i:Ingredient)
+        OPTIONAL MATCH (ins:Instruction)-[:PART_OF]->(r)
+        RETURN r,
+               collect(DISTINCT {ingredient: i, relationship: rel}) as ingredients,
+               collect(DISTINCT ins) as instructions
+        `,
+        { id }
     );
-    return result.records[0]?.get('r').properties;
+
+    if (!result.records[0]) {
+        return null;
+    }
+
+    const recipe = this._processNode(result.records[0].get('r').properties);
+    const ingredients = result.records[0].get('ingredients')
+        .filter(i => i.ingredient)
+        .map(i => ({
+            ...this._processNode(i.ingredient.properties),
+            value: i.relationship.properties.value,
+            unit: i.relationship.properties.unit,
+            comment: i.relationship.properties.comment
+        }));
+    const instructions = result.records[0].get('instructions')
+        .map(i => this._processNode(i.properties));
+
+    return {
+        ...recipe,
+        ingredients,
+        instructions
+    };
   }
 
   async updateRecipe(id, properties) {
-    const result = await this.query(
-      `MATCH (r:Recipe {id: $id}) SET r += $props RETURN r`,
-      { id, props: properties }
-    );
-    return result.records[0].get('r').properties;
+    // First update the recipe node itself
+    const updatedRecipe = await this.updateNode('Recipe', id, properties);
+    
+    // If there are ingredients or instructions to update, handle those
+    if (properties.ingredients || properties.instructions) {
+        const session = this.driver.session();
+        try {
+            await session.executeWrite(async tx => {
+                if (properties.ingredients) {
+                    // Delete existing relationships and create new ones
+                    await tx.run('MATCH (r:Recipe {id: $id})-[rel:CONTAINS]->() DELETE rel', { id });
+                    for (const ingredient of properties.ingredients) {
+                        await tx.run(
+                            `
+                            MERGE (i:Ingredient {name: $name})
+                            ON CREATE SET i.id = $ingId, i.createdAt = datetime().epochMillis
+                            WITH i
+                            MATCH (r:Recipe {id: $recipeId})
+                            CREATE (r)-[rel:CONTAINS {
+                                value: $value,
+                                unit: $unit,
+                                comment: $comment,
+                                createdAt: datetime().epochMillis
+                            }]->(i)
+                            `,
+                            {
+                                name: ingredient.name,
+                                ingId: `ingredient_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`,
+                                recipeId: id,
+                                value: ingredient.value,
+                                unit: ingredient.unit,
+                                comment: ingredient.comment
+                            }
+                        );
+                    }
+                }
+
+                if (properties.instructions) {
+                    // Delete existing instructions and create new ones
+                    await tx.run('MATCH (i:Instruction)-[:PART_OF]->(r:Recipe {id: $id}) DETACH DELETE i', { id });
+                    for (const instruction of properties.instructions) {
+                        await tx.run(
+                            `
+                            MATCH (r:Recipe {id: $recipeId})
+                            CREATE (i:Instruction {
+                                id: $id,
+                                part: $part,
+                                steps: $steps,
+                                createdAt: datetime().epochMillis
+                            })-[:PART_OF]->(r)
+                            `,
+                            {
+                                recipeId: id,
+                                id: `instruction_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`,
+                                part: instruction.part,
+                                steps: instruction.steps
+                            }
+                        );
+                    }
+                }
+            });
+        } finally {
+            await session.close();
+        }
+    }
+    return this.getRecipe(id);
   }
 
   async deleteRecipe(id) {
-    await this.query(
-      `MATCH (r:Recipe {id: $id}) DETACH DELETE r`,
-      { id }
-    );
+    return this.deleteNode('Recipe', id);
   }
 
   // CRUD Operations for Instructions
-  async createInstruction(properties) {
-    const result = await this.query(
-      `CREATE (i:Instruction $props) RETURN i`,
-      { props: properties }
-    );
-    return result.records[0].get('i').properties;
+  async createInstruction(data) {
+    return this.createNode('Instruction', data);
   }
 
   async getInstruction(id) {
-    const result = await this.query(
-      `MATCH (i:Instruction {id: $id}) RETURN i`,
-      { id }
-    );
-    return result.records[0]?.get('i').properties;
+    return this.getNode('Instruction', id);
   }
 
-  async updateInstruction(id, properties) {
-    const result = await this.query(
-      `MATCH (i:Instruction {id: $id}) SET i += $props RETURN i`,
-      { id, props: properties }
-    );
-    return result.records[0].get('i').properties;
+  async updateInstruction(id, data) {
+    return this.updateNode('Instruction', id, data);
   }
 
   async deleteInstruction(id) {
-    await this.query(
-      `MATCH (i:Instruction {id: $id}) DETACH DELETE i`,
-      { id }
-    );
+    return this.deleteNode('Instruction', id);
   }
 
   // CRUD Operations for RecipeIngredients
   async createRecipeIngredient(properties) {
-    const result = await this.query(
-      `CREATE (ri:RecipeIngredient $props) RETURN ri`,
-      { props: properties }
-    );
-    return result.records[0].get('ri').properties;
+    return this.createNode('RecipeIngredient', properties);
   }
 
   async getRecipeIngredient(id) {
-    const result = await this.query(
-      `MATCH (ri:RecipeIngredient {id: $id}) RETURN ri`,
-      { id }
-    );
-    return result.records[0]?.get('ri').properties;
+    return this.getNode('RecipeIngredient', id);
   }
 
   async updateRecipeIngredient(id, properties) {
-    const result = await this.query(
-      `MATCH (ri:RecipeIngredient {id: $id}) SET ri += $props RETURN ri`,
-      { id, props: properties }
-    );
-    return result.records[0].get('ri').properties;
+    return this.updateNode('RecipeIngredient', id, properties);
   }
 
   async deleteRecipeIngredient(id) {
-    await this.query(
-      `MATCH (ri:RecipeIngredient {id: $id}) DETACH DELETE ri`,
-      { id }
-    );
+    return this.deleteNode('RecipeIngredient', id);
   }
 
   // CRUD Operations for RecipeModifications
-  async createRecipeModification(properties) {
-    const result = await this.query(
-      `CREATE (rm:RecipeModification $props) RETURN rm`,
-      { props: properties }
-    );
-    return result.records[0].get('rm').properties;
+  async createRecipeModification(data) {
+    return this.createNode('RecipeModification', data);
   }
 
   async getRecipeModification(id) {
-    const result = await this.query(
-      `MATCH (rm:RecipeModification {id: $id}) RETURN rm`,
-      { id }
-    );
-    return result.records[0]?.get('rm').properties;
+    return this.getNode('RecipeModification', id);
   }
 
   async updateRecipeModification(id, properties) {
-    const result = await this.query(
-      `MATCH (rm:RecipeModification {id: $id}) SET rm += $props RETURN rm`,
-      { id, props: properties }
-    );
-    return result.records[0].get('rm').properties;
+    return this.updateNode('RecipeModification', id, properties);
   }
 
   async deleteRecipeModification(id) {
-    await this.query(
-      `MATCH (rm:RecipeModification {id: $id}) DETACH DELETE rm`,
-      { id }
-    );
+    return this.deleteNode('RecipeModification', id);
   }
 
   // CRUD Operations for ModificationResponses
-  async createModificationResponse(properties) {
-    const result = await this.query(
-      `CREATE (mr:ModificationResponse $props) RETURN mr`,
-      { props: properties }
-    );
-    return result.records[0].get('mr').properties;
+  async createModificationResponse(data) {
+    return this.createNode('ModificationResponse', data);
   }
 
   async getModificationResponse(id) {
-    const result = await this.query(
-      `MATCH (mr:ModificationResponse {id: $id}) RETURN mr`,
-      { id }
-    );
-    return result.records[0]?.get('mr').properties;
+    return this.getNode('ModificationResponse', id);
   }
 
   async updateModificationResponse(id, properties) {
-    const result = await this.query(
-      `MATCH (mr:ModificationResponse {id: $id}) SET mr += $props RETURN mr`,
-      { id, props: properties }
-    );
-    return result.records[0].get('mr').properties;
+    return this.updateNode('ModificationResponse', id, properties);
   }
 
   async deleteModificationResponse(id) {
-    await this.query(
-      `MATCH (mr:ModificationResponse {id: $id}) DETACH DELETE mr`,
-      { id }
-    );
+    return this.deleteNode('ModificationResponse', id);
   }
 
   // CRUD Operations for UserRecipes
   async createUserRecipe(properties) {
-    const result = await this.query(
-      `CREATE (ur:UserRecipe $props) RETURN ur`,
-      { props: properties }
-    );
-    return result.records[0].get('ur').properties;
+    return this.createNode('UserRecipe', properties);
   }
 
   async getUserRecipe(id) {
-    const result = await this.query(
-      `MATCH (ur:UserRecipe {id: $id}) RETURN ur`,
-      { id }
-    );
-    return result.records[0]?.get('ur').properties;
+    return this.getNode('UserRecipe', id);
   }
 
   async updateUserRecipe(id, properties) {
-    const result = await this.query(
-      `MATCH (ur:UserRecipe {id: $id}) SET ur += $props RETURN ur`,
-      { id, props: properties }
-    );
-    return result.records[0].get('ur').properties;
+    return this.updateNode('UserRecipe', id, properties);
   }
 
   async deleteUserRecipe(id) {
-    await this.query(
-      `MATCH (ur:UserRecipe {id: $id}) DETACH DELETE ur`,
-      { id }
-    );
+    return this.deleteNode('UserRecipe', id);
   }
 
-  // Additional methods as needed...
+  async createRecipeWithIngredientsAndInstructions(data) {
+    const session = this.driver.session();
+    try {
+        const result = await session.executeWrite(async tx => {
+            // Check if AIResponse exists
+            const aiResponseCheck = await tx.run(
+                'MATCH (ar:AIResponse {id: $aiResponseId}) RETURN ar',
+                { aiResponseId: data.aiResponseId }
+            );
+
+            if (aiResponseCheck.records.length === 0) {
+                throw new Error(`AIResponse with id ${data.aiResponseId} does not exist.`);
+            }
+
+            // Create Recipe node
+            const recipeResult = await tx.run(
+                `
+                CREATE (r:Recipe {
+                    id: $id,
+                    name: $name,
+                    prepTime: $prepTime,
+                    prepUnit: $prepUnit,
+                    cookTime: $cookTime,
+                    cookUnit: $cookUnit,
+                    portionSize: $portionSize,
+                    finalComment: $finalComment
+                })
+                SET r.createdAt = datetime().epochMillis,
+                    r.updatedAt = datetime().epochMillis
+                WITH r
+                MATCH (ar:AIResponse {id: $aiResponseId})
+                CREATE (ar)-[:GENERATES]->(r)
+                RETURN r
+                `,
+                {
+                    id: `recipe_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`,
+                    name: data.name,
+                    prepTime: data.prepTime,
+                    prepUnit: data.prepUnit,
+                    cookTime: data.cookTime,
+                    cookUnit: data.cookUnit,
+                    portionSize: data.portions,
+                    finalComment: data.final_comment,
+                    aiResponseId: data.aiResponseId
+                }
+            );
+
+            const recipe = recipeResult.records[0].get('r').properties;
+
+            // Create or merge ingredients and create relationships
+            for (const ingredient of data.ingredients) {
+                await tx.run(
+                    `
+                    MERGE (i:Ingredient {name: $name})
+                    ON CREATE SET 
+                        i.id = $id,
+                        i.createdAt = timestamp(),
+                        i.category = $category
+                    WITH i
+                    MATCH (r:Recipe {id: $recipeId})
+                    CREATE (r)-[rel:CONTAINS {
+                        value: $value,
+                        unit: $unit,
+                        comment: $comment,
+                        createdAt: timestamp()
+                    }]->(i)
+                    `,
+                    {
+                        name: ingredient.name,
+                        id: `ingredient_${Date.now()}_${Math.random()}`,
+                        category: ingredient.category || 'uncategorized',
+                        recipeId: recipe.id,
+                        value: ingredient.value,
+                        unit: ingredient.unit,
+                        comment: ingredient.comment
+                    }
+                );
+            }
+
+            // Create instructions with relationships
+            for (const instruction of data.instructions) {
+                await tx.run(
+                    `
+                    MATCH (r:Recipe {id: $recipeId})
+                    CREATE (i:Instruction {
+                        id: $id,
+                        part: $part,
+                        steps: $steps,
+                        createdAt: timestamp()
+                    })-[:PART_OF]->(r)
+                    `,
+                    {
+                        recipeId: recipe.id,
+                        id: `instruction_${Date.now()}_${Math.random()}`,
+                        part: instruction.part,
+                        steps: instruction.steps
+                    }
+                );
+            }
+
+            // Get complete recipe with relationships
+            return await tx.run(
+              `
+              MATCH (r:Recipe {id: $recipeId})
+              OPTIONAL MATCH (r)-[rel:CONTAINS]->(i:Ingredient)
+              OPTIONAL MATCH (ins:Instruction)-[:PART_OF]->(r)
+              OPTIONAL MATCH (ar:AIResponse)-[:GENERATES]->(r)
+              RETURN r,
+                     collect(DISTINCT {ingredient: i, relationship: rel}) as ingredients,
+                     collect(DISTINCT ins) as instructions,
+                     ar
+              `,
+              { recipeId: recipe.id }
+            );
+        });
+
+        
+        const record = result.records[0];
+        const recipe = this._processNode(record.get('r').properties);
+        const ingredients = record.get('ingredients')
+            .filter(i => i.ingredient)
+            .map(i => ({
+                ...this._processNode(i.ingredient.properties),
+                value: i.relationship.properties.value,
+                unit: i.relationship.properties.unit,
+                comment: i.relationship.properties.comment
+            }));
+        const instructions = record.get('instructions')
+            .map(i => this._processNode(i.properties));
+
+        return {
+            ...recipe,
+            ingredients,
+            instructions,
+            prep: {
+                value: recipe.prepTime,
+                unit: recipe.prepUnit
+            },
+            cook: {
+                value: recipe.cookTime,
+                unit: recipe.cookUnit
+            }
+        };
+
+    } finally {
+        await session.close();
+    }
+}
 }
 
 export { Neo4jService };

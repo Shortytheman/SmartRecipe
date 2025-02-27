@@ -161,7 +161,7 @@ const services = {
 const validateDbType = (req, res, next) => {
     const dbType = req.params.dbType.toLowerCase();
     if (!['mongodb', 'mysql', 'neo4j'].includes(dbType)) {
-        return res.status(400).json({ error: 'Invalid database type. Use mongodb or mysql' });
+        return res.status(400).json({ error: 'Invalid database type. Use mongodb, mysql or neo4j' });
     }
     req.dbService = services[dbType];
     req.dbType = dbType;
@@ -226,7 +226,7 @@ app.post('/:dbType/:model', validateDbType, async (req, res) => {
                 res.status(200).json(result)
                 break;
             case "neo4j":
-                result = await services.neo4j.getAll(model)
+                result = await services.neo4j.createModel(model, data)
                 console.log(result)
                 res.status(200).json(result)
                 break;
@@ -255,7 +255,7 @@ app.get('/:dbType/:model/:id', validateDbType, async (req, res) => {
             }
             result = await services.mongodb.getModel(model, id);
         } else if (dbType === 'neo4j') {
-            result = await req.dbService[`get${capitalize(model)}`](id);
+            result = await services.neo4j.getModel(model, id)
         } else {
             const numericId = parseInt(id, 10);
             if (isNaN(numericId)) {
@@ -293,6 +293,8 @@ app.put('/:dbType/:model/:id', validateDbType, async (req, res) => {
             result = await services.mongodb.updateModel(model, id, data)
         } if(dbType === "mysql") {
             result = await services.mysql.updateModel(model, id, data)
+        } if (dbType === "neo4j") {
+            result = await services.neo4j.updateModel(model, id, data)
         }
         if (result) {
             console.log(`${capitalize(model)} updated: ${JSON.stringify(result)}`);
@@ -314,7 +316,9 @@ app.delete('/:dbType/:model/:id', validateDbType, async (req, res) => {
 
     try {
         let result;
-        if (dbType === 'mongodb') {
+        if (dbType === 'neo4j') {
+            result = await services.neo4j.deleteModel(model, id)
+        } else if (dbType === 'mongodb') {
             if (!mongoose.Types.ObjectId.isValid(id)) {
                 return res.status(400).json({ error: 'Invalid ID format. ID must be a valid ObjectId.' });
             }
