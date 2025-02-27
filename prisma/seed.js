@@ -20,21 +20,19 @@ const dbConfig = {
 };
 
 async function setupDatabase() {
-    const connection = await mysql.createConnection(process.env.DATABASE_URL);
+    const connection = await mysql.createConnection(dbConfig);
 
     // Ensure we're using the correct database
-    await connection.query('CREATE DATABASE IF NOT EXISTS smartrecipe');
-    await connection.query('USE smartrecipe');
+    await connection.query(`
+        CREATE DATABASE IF NOT EXISTS smartrecipe;
+        USE smartrecipe;
+    `);
 
     try {
         console.log('Setting up database and users...');
 
         // Initial database and user setup
         await connection.query(`
-      -- Create the database if it doesn't exist
-      CREATE DATABASE IF NOT EXISTS smartrecipe;
-      USE smartrecipe;
-      
       -- Drop existing users
       DROP USER IF EXISTS 'admin'@'${dbConfig.host}';
       DROP USER IF EXISTS 'read_only_user'@'${dbConfig.host}';

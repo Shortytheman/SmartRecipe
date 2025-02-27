@@ -1,11 +1,14 @@
 import { faker } from '@faker-js/faker';
 import neo4j from 'neo4j-driver';
 import { fileURLToPath } from 'url';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 class Neo4jService {
     constructor() {
         this.driver = neo4j.driver(
-            'bolt://neo4j_db:7687',
+            process.env.NEO4J_URI,
             neo4j.auth.basic('neo4j', 'password')
         );
     }

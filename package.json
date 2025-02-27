@@ -17,7 +17,6 @@
     "seed:mongo": "node mongoDB/seed.js",
     "seed:neo4j": "node neo4j/neo4jSeeder.js",
     "seed:mysql": "node prisma/seed.js",
-    "seed": "node prisma/seed.js && node neo4j/neo4jSeeder.js && node mongoDB/seed.js",
     "seed:all": "node mongoDB/seed.js & node neo4j/neo4jSeeder.js & node prisma/seed.js",
     "migrate": "prisma migrate deploy"
   },
