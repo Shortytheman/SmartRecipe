@@ -253,7 +253,7 @@ app.get('/:dbType/:model/:id', validateDbType, async (req, res) => {
             if (!mongoose.Types.ObjectId.isValid(id)) {
                 return res.status(400).json({ error: 'Invalid ID format. ID must be a valid ObjectId.' });
             }
-            result = await req.dbService[`get${capitalize(model)}`](new mongoose.Types.ObjectId(id));
+            result = await services.mongodb.getModel(model, id);
         } else if (dbType === 'neo4j') {
             result = await req.dbService[`get${capitalize(model)}`](id);
         } else {
@@ -261,7 +261,7 @@ app.get('/:dbType/:model/:id', validateDbType, async (req, res) => {
             if (isNaN(numericId)) {
                 return res.status(400).json({ error: 'Invalid ID format. ID must be a number.' });
             }
-            result = await req.dbService[`get${capitalize(model)}`](numericId);
+            result = await services.mysql.getModel(model, id)
         }
 
         if (result) {
@@ -290,15 +290,10 @@ app.put('/:dbType/:model/:id', validateDbType, async (req, res) => {
             if (!mongoose.Types.ObjectId.isValid(id)) {
                 return res.status(400).json({ error: 'Invalid ID format. ID must be a valid ObjectId.' });
             }
-            result = await req.dbService[`update${capitalize(model)}`](new mongoose.Types.ObjectId(id), req.body);
-        } else {
-            const numericId = parseInt(id, 10);
-            if (isNaN(numericId)) {
-                return res.status(400).json({ error: 'Invalid ID format. ID must be a number.' });
-            }
-            result = await req.dbService[`update${capitalize(model)}`](numericId, req.body);
+            result = await services.mongodb.updateModel(model, id, data)
+        } if(dbType === "mysql") {
+            result = await services.mysql.updateModel(model, id, data)
         }
-
         if (result) {
             console.log(`${capitalize(model)} updated: ${JSON.stringify(result)}`);
             res.json(result);
@@ -323,21 +318,13 @@ app.delete('/:dbType/:model/:id', validateDbType, async (req, res) => {
             if (!mongoose.Types.ObjectId.isValid(id)) {
                 return res.status(400).json({ error: 'Invalid ID format. ID must be a valid ObjectId.' });
             }
-            // Soft delete for MongoDB
-            result = await req.dbService[`update${capitalize(model)}`](
-                new mongoose.Types.ObjectId(id), 
-                { deletedAt: new Date() }
-            );
+            result = await services.mongodb.deleteModel(model, id);
         } else {
             const numericId = parseInt(id, 10);
             if (isNaN(numericId)) {
                 return res.status(400).json({ error: 'Invalid ID format. ID must be a number.' });
             }
-            // Soft delete for MySQL
-            result = await req.dbService[`update${capitalize(model)}`](
-                numericId, 
-                { deletedAt: new Date() }
-            );
+            result = await services.mysql.hardDeleteModel(id)
         }
 
         if (result) {

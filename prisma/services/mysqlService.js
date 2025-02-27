@@ -35,6 +35,39 @@ class MySQLService {
     return this[methodName](data); // Call the dynamically constructed method
   }
 
+  async getModel(model, id) {
+    const modelName = model.charAt(0).toUpperCase() + model.slice(1);
+    const methodName = `get${modelName}`;
+
+    if (typeof this[methodName] !== 'function') {
+      throw new Error(`Method ${methodName} not found for model ${model}`);
+    }
+
+
+    return this[methodName](id);
+  }
+
+  async updateModel(model, id, data) {
+    const modelName = model.charAt(0).toUpperCase() + model.slice(1);
+    const methodName = `update${modelName}`;
+
+    if (typeof this[methodName] !== 'function') {
+      throw new Error(`Method ${methodName} not found for model ${model}`);
+    }
+
+    return this[methodName](id, data);
+  }
+
+  async hardDeleteModel(model, id) {
+    const modelName = model.charAt(0).toUpperCase() + model.slice(1);
+    const methodName = `delete${modelName}`;
+
+    if (typeof this[methodName] !== 'function') {
+      throw new Error(`Method ${methodName} not found for model ${model}`);
+    }
+    return this[methodName](id);
+  }
+
   // CRUD Operations for Users
   async getUsers() {
     return await this.prisma.user.findMany();
@@ -189,33 +222,25 @@ class MySQLService {
 
       for (const ingredient of recipeData.ingredients) {
         const name = ingredient.name;
-        const uniqueIngredient = await prisma.ingredient.findUnique( {where: { name }});
-        if(uniqueIngredient){
+        const uniqueIngredient = await tx.ingredient.findUnique({ where: { name } });
+        if (uniqueIngredient) {
           await tx.recipeIngredient.create({
             data: {
               value: ingredient.value,
               unit: ingredient.unit,
               comment: ingredient.comment,
               recipe: {
-                connect: {
-                  id: recipe.id
-                }
+                connect: { id: recipe.id }
               },
               ingredient: {
-                connect: {
-                  id: uniqueIngredient.id
-                }
+                connect: { id: uniqueIngredient.id }
               }
             }
           });
-        }else {
+        } else {
           const ingredientId = await tx.ingredient.create({
-            data: {
-              name
-            },
-            select: {
-              id: true,
-            },
+            data: { name },
+            select: { id: true }
           });
           await tx.recipeIngredient.create({
             data: {
@@ -223,14 +248,10 @@ class MySQLService {
               unit: ingredient.unit,
               comment: ingredient.comment,
               recipe: {
-                connect: {
-                  id: recipe.id
-                }
+                connect: { id: recipe.id }
               },
               ingredient: {
-                connect: {
-                  id: ingredientId.id
-                }
+                connect: { id: ingredientId.id }
               }
             }
           });
@@ -243,33 +264,23 @@ class MySQLService {
           data: {
             recipeId: recipe.id,
             part: part,
-            steps: steps,
+            steps: steps
           }
         });
       }
 
-      await tx.recipe.findUnique({
-        where: { id: recipe.id },
-        include: {
-          instructions: true,
-          recipeIngredients: {
-            include: {
-              ingredient: true,
-            },
-          },
-        },
-      });
       const savedRecipe = await tx.recipe.findUnique({
         where: { id: recipe.id },
         include: {
           instructions: true,
           recipeIngredients: {
-            include: { ingredient: true },
-          },
-        },
+            include: { ingredient: true }
+          }
+        }
       });
+
       return savedRecipe;
-    });
+    }, { timeout: 60000 }); // Increase timeout to 10 seconds
   }
 
   async getRecipe(id) {
